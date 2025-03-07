@@ -28,16 +28,39 @@ class HomeRoute extends PageRouteInfo<void> {
 
 /// generated route for
 /// [LoginScreen]
-class LoginRoute extends PageRouteInfo<void> {
-  const LoginRoute({List<PageRouteInfo>? children})
-    : super(LoginRoute.name, initialChildren: children);
+class LoginRoute extends PageRouteInfo<LoginRouteArgs> {
+  LoginRoute({
+    Key? key,
+    void Function(bool)? onResult,
+    List<PageRouteInfo>? children,
+  }) : super(
+         LoginRoute.name,
+         args: LoginRouteArgs(key: key, onResult: onResult),
+         initialChildren: children,
+       );
 
   static const String name = 'LoginRoute';
 
   static PageInfo page = PageInfo(
     name,
     builder: (data) {
-      return const LoginScreen();
+      final args = data.argsAs<LoginRouteArgs>(
+        orElse: () => const LoginRouteArgs(),
+      );
+      return LoginScreen(key: args.key, onResult: args.onResult);
     },
   );
+}
+
+class LoginRouteArgs {
+  const LoginRouteArgs({this.key, this.onResult});
+
+  final Key? key;
+
+  final void Function(bool)? onResult;
+
+  @override
+  String toString() {
+    return 'LoginRouteArgs{key: $key, onResult: $onResult}';
+  }
 }

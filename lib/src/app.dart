@@ -8,7 +8,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authNotifier = ref.watch(authProvider.notifier);
+    final authNotifier = ref.watch(authProvider);
     final appRouter = ref.watch(appRouterProvider);
     return MaterialApp.router(
       routerConfig: appRouter.config(reevaluateListenable: authNotifier),

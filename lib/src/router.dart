@@ -21,8 +21,8 @@ class AppRouter extends RootStackRouter {
 
   @override
   List<AutoRoute> get routes => [
-    AutoRoute(path: '/login', page: LoginRoute.page, initial: true),
-    AutoRoute(path: '/home', page: HomeRoute.page),
+    AutoRoute(path: '/home', page: HomeRoute.page, initial: true),
+    AutoRoute(path: '/login', page: LoginRoute.page),
   ];
 
   @override
@@ -32,23 +32,47 @@ class AppRouter extends RootStackRouter {
 }
 
 @RoutePage()
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authNotifier = ref.watch(authProvider);
+    return Scaffold(
+      appBar: AppBar(title: Text('Home')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('AniChar Tierlist'),
+            if (authNotifier.isLoggedIn) ...[
+              Text(
+                'Logged in as: ${authNotifier.state.unwrapPrevious().valueOrNull?.credential?.username ?? 'N/A'}',
+              ),
+              ElevatedButton(
+                onPressed: authNotifier.logout,
+                child: Text('Logout'),
+              ),
+            ] else ...[
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(appRouterProvider).push(LoginRoute());
+                },
+                child: Text('Login'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
 
 @RoutePage()
 class LoginScreen extends ConsumerWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.onResult});
+
+  final void Function(bool)? onResult;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,16 +80,18 @@ class LoginScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text('MyAnimeList Login')),
       body: Center(
-        child: ListenableBuilder(
-          listenable: authNotifier,
-          builder: (context, _) {
-            return authNotifier.state.when(
+        child: ValueListenableBuilder(
+          valueListenable: ValueNotifier<AsyncValue<AuthNotifierState>>(
+            authNotifier.state,
+          ),
+          builder: (context, asyncValue, _) {
+            return asyncValue.when(
               data: (state) {
                 final credential = state.credential;
                 return credential == null
                     ? ElevatedButton(
                       onPressed: () async {
-                        authNotifier.login();
+                        authNotifier.login(onResult: onResult);
                       },
                       child: Text('Login with MyAnimeList'),
                     )
@@ -100,7 +126,13 @@ class AuthGuard extends AutoRouteGuard {
     if (authNotifier.isLoggedIn || resolver.routeName == LoginRoute.name) {
       resolver.next();
     } else {
-      resolver.redirectUntil(LoginRoute());
+      resolver.redirectUntil(
+        LoginRoute(
+          onResult: (result) {
+            resolver.next(result);
+          },
+        ),
+      );
     }
   }
 }

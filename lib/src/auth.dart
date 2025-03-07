@@ -65,7 +65,7 @@ class AuthNotifier extends ChangeNotifier {
 
   bool get isLoggedIn => state.unwrapPrevious().value?.credential != null;
 
-  Future<void> login() async {
+  Future<void> login({void Function(bool)? onResult}) async {
     final codeVerifier = _generateCodeChallenge(_generateCodeVerifier());
     await _storage.delete(key: 'code_verifier');
     _storage.write(key: 'code_verifier', value: codeVerifier);
@@ -73,9 +73,13 @@ class AuthNotifier extends ChangeNotifier {
         'https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=$_clientId&code_challenge=$codeVerifier&code_challenge_method=plain&redirect_uri=$_redirectUri';
 
     if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      bool success = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+      onResult?.call(success);
     } else {
-      throw 'Could not launch $url';
+      throw Exception('Could not launch $url');
     }
   }
 
