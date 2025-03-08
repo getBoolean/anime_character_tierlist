@@ -8,12 +8,20 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authNotifier = ref.watch(authProvider);
-    final appRouter = ref.watch(appRouterProvider);
-    return MaterialApp.router(
-      routerConfig: appRouter.config(reevaluateListenable: authNotifier),
+    final authState = ref.watch(authProvider);
+    return MaterialApp(
       title: 'AniChar Tierlist',
       theme: ThemeData(primarySwatch: Colors.blue),
+      home: authState.when(
+        data:
+            (state) =>
+                state.isLoggedIn ? const HomeScreen() : const LoginScreen(),
+        error: (err, st) => Scaffold(body: Center(child: Text(err.toString()))),
+        loading:
+            () => Scaffold(
+              body: Center(child: const CircularProgressIndicator()),
+            ),
+      ),
     );
   }
 }

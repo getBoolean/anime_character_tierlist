@@ -8,12 +8,16 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
-final authProvider = ChangeNotifierProvider<AuthNotifier>(
-  (ref) => AuthNotifier(),
+final authProvider = AsyncNotifierProvider<AuthNotifier, AuthNotifierState>(
+  () => AuthNotifier(),
 );
 
-class AuthNotifier extends ChangeNotifier {
-  AsyncValue<AuthNotifierState> state = AsyncValue.data(AuthNotifierState());
+class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
+  @override
+  Future<AuthNotifierState> build() async {
+    final state = await _loadTokens();
+    return state;
+  }
 
   late final FlutterSecureStorage _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -25,10 +29,6 @@ class AuthNotifier extends ChangeNotifier {
   //     '14b9296d7b74983d13a714d7bbb568a6381a04a56119ab6c8946576d0a7f6e8f';
   final String _redirectUri =
       'dev.getboolean.anime-character-tierlist://oauth2redirect';
-
-  AuthNotifier() {
-    _loadTokens();
-  }
 
   String _generateCodeVerifier([int length = 128]) {
     final random = Random.secure();
@@ -43,7 +43,7 @@ class AuthNotifier extends ChangeNotifier {
     ).split('=')[0];
   }
 
-  Future<void> _loadTokens() async {
+  Future<AuthNotifierState> _loadTokens() async {
     try {
       final accessToken = await _storage.read(key: 'access_token');
       final refreshToken = await _storage.read(key: 'refresh_token');
@@ -54,16 +54,14 @@ class AuthNotifier extends ChangeNotifier {
           () => _refreshAccessToken(accessToken, refreshToken, username),
         );
       } else {
-        state = AsyncValue.data(AuthNotifierState.empty());
+        return AuthNotifierState.empty();
       }
     } catch (e) {
       if (kDebugMode) print('Error loading tokens: $e');
-      state = AsyncValue.data(AuthNotifierState.empty());
+      return AuthNotifierState.empty();
     }
-    notifyListeners();
+    return AuthNotifierState.empty();
   }
-
-  bool get isLoggedIn => state.unwrapPrevious().value?.credential != null;
 
   Future<void> login({void Function(bool)? onResult}) async {
     final codeVerifier = _generateCodeChallenge(_generateCodeVerifier());
@@ -126,7 +124,6 @@ class AuthNotifier extends ChangeNotifier {
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
     }
-    notifyListeners();
   }
 
   Future<String> _fetchUsername(String accessToken) async {
@@ -208,7 +205,6 @@ class AuthNotifier extends ChangeNotifier {
 
   Future<void> logout() async {
     await _clearTokens();
-    notifyListeners();
   }
 }
 
@@ -230,4 +226,6 @@ class AuthNotifierState {
       const AuthNotifierState(credential: null);
 
   const AuthNotifierState({this.credential});
+
+  bool get isLoggedIn => credential != null;
 }
