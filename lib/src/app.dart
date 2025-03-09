@@ -1,4 +1,4 @@
-import 'package:anime_character_tierlist/src/auth.dart';
+import 'package:anime_character_tierlist/src/features/auth.dart';
 import 'package:anime_character_tierlist/src/router.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
