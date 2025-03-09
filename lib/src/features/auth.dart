@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:anime_character_tierlist/src/exceptions/mal_exception.dart';
+import 'package:anime_character_tierlist/src/features/mal.dart';
 import 'package:app_links/app_links.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -51,22 +53,6 @@ class AuthRepository {
     } else {
       if (kDebugMode) print('Failed to get access token: ${response.body}');
       throw Exception('Failed to get access token');
-    }
-  }
-
-  Future<String> fetchUsername(String accessToken) async {
-    final url = Uri.parse('https://api.myanimelist.net/v2/users/@me');
-    final response = await http.get(
-      url,
-      headers: {'Authorization': 'Bearer $accessToken'},
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data['name'];
-    } else {
-      if (kDebugMode) print('Failed to get username: ${response.body}');
-      throw Exception('Failed to get username');
     }
   }
 
@@ -137,9 +123,10 @@ final appLinksStreamProvider = StreamProvider<Uri>((ref) async* {
   yield* appLinks.uriLinkStream;
 });
 
-final authProvider = AsyncNotifierProvider<AuthNotifier, AuthNotifierState>(() {
-  return AuthNotifier();
-});
+final authNotifierProvider =
+    AsyncNotifierProvider<AuthNotifier, AuthNotifierState>(() {
+      return AuthNotifier();
+    });
 
 class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
   @override
@@ -178,21 +165,23 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
 
   Future<AuthNotifierState> _loadTokens() async {
     try {
+      final accessToken = await _storage.read(key: 'access_token');
       final refreshToken = await _storage.read(key: 'refresh_token');
       final username = await _storage.read(key: 'username');
-
-      if (refreshToken != null) {
-        state = await AsyncValue.guard(
-          () => _refreshAccessToken(refreshToken, username),
-        );
-      } else {
+      if (accessToken == null || refreshToken == null || username == null) {
         return AuthNotifierState.empty();
       }
+      return AuthNotifierState(
+        credential: Credential(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          username: username,
+        ),
+      );
     } catch (e) {
       if (kDebugMode) print('Error loading tokens: $e');
       return AuthNotifierState.empty();
     }
-    return AuthNotifierState.empty();
   }
 
   Future<void> saveCodeVerifier(String codeVerifier) async {
@@ -225,6 +214,34 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     ).split('=')[0];
   }
 
+  Future<T> retry<T>(Future<T> Function(String accessToken) function) async {
+    final refreshToken = await _storage.read(key: 'refresh_token');
+    if (refreshToken == null) {
+      throw StateError('Refresh token not found');
+    }
+
+    final accessToken = await _storage.read(key: 'access_token');
+    if (accessToken == null) {
+      throw StateError('Access token not found');
+    }
+    try {
+      return await function(accessToken);
+    } on MalException catch (e) {
+      if (e.response.statusCode == 401 &&
+          (e.response.headers['www-authenticate']?.contains('invalid_token') ??
+              false)) {
+        await _refreshAccessToken(refreshToken, accessToken);
+        final newAccessToken = await _storage.read(key: 'access_token');
+        if (newAccessToken == null) {
+          throw StateError('Access token not found');
+        }
+        return await function(newAccessToken);
+      } else {
+        rethrow;
+      }
+    }
+  }
+
   Future<void> exchangeCodeForToken(String authorizationCode) async {
     state = const AsyncValue.loading();
     final codeVerifier = await _storage.read(key: 'code_verifier');
@@ -240,9 +257,9 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
           redirectUri: _redirectUrl,
         );
     try {
-      final username = await ref
-          .read(authRepositoryProvider)
-          .fetchUsername(accessToken);
+      final username = await retry(
+        ref.read(malRepositoryProvider).fetchUsername,
+      );
       await _saveTokens(accessToken, refreshToken, username);
       state = AsyncValue.data(
         AuthNotifierState(
@@ -270,7 +287,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
 
   Future<AuthNotifierState> _refreshAccessToken(
     String refreshToken,
-    String? username,
+    String username,
   ) async {
     try {
       final (
@@ -279,7 +296,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
       ) = await ref
           .read(authRepositoryProvider)
           .refreshAccessToken(refreshToken: refreshToken, clientId: _clientId);
-      await _saveTokens(newAccessToken, newRefreshToken, username!);
+      await _saveTokens(newAccessToken, newRefreshToken, username);
       return AuthNotifierState(
         credential: Credential(
           accessToken: newAccessToken,
@@ -312,11 +329,11 @@ class AuthService {
   AuthService(this._ref);
 
   Future<void> login() async {
-    await _ref.read(authProvider.notifier).login();
+    await _ref.read(authNotifierProvider.notifier).login();
   }
 
   Future<void> logout() async {
-    await _ref.read(authProvider.notifier).logout();
+    await _ref.read(authNotifierProvider.notifier).logout();
   }
 }
 

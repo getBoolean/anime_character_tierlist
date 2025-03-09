@@ -7,7 +7,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
+    final authState = ref.watch(authNotifierProvider);
     return Scaffold(
       appBar: AppBar(title: Text('Home')),
       body: Center(
@@ -44,7 +44,7 @@ class LoginScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
+    final authState = ref.watch(authNotifierProvider);
     return Scaffold(
       appBar: AppBar(title: Text('MyAnimeList Login')),
       body: Center(

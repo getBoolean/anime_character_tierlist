@@ -8,7 +8,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
+    final authState = ref.watch(authNotifierProvider);
     return MaterialApp(
       title: 'AniChar Tierlist',
       theme: ThemeData(primarySwatch: Colors.blue),
