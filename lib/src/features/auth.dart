@@ -18,7 +18,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 class AuthRepository {
   AuthRepository();
 
-  Future<({String accessToken, String refreshToken})> exchangeCodeForToken({
+  Future<Credential> exchangeCodeForToken({
     required String authorizationCode,
     required String codeVerifier,
     required String clientId,
@@ -48,15 +48,22 @@ class AuthRepository {
     if (data case {
       'access_token': String accessToken,
       'refresh_token': String refreshToken,
+      'expires_in': int expiresIn,
+      'token_type': String tokenType,
     }) {
-      return (accessToken: accessToken, refreshToken: refreshToken);
+      return Credential(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        expiresIn: expiresIn,
+        tokenType: tokenType,
+      );
     } else {
       if (kDebugMode) print('Failed to get access token: ${response.body}');
       throw MalException('Failed to get access token', response);
     }
   }
 
-  Future<({String accessToken, String refreshToken})> refreshAccessToken({
+  Future<Credential> refreshAccessToken({
     required String refreshToken,
     required String clientId,
     String? clientSecret,
@@ -83,8 +90,15 @@ class AuthRepository {
     if (data case {
       'access_token': String accessToken,
       'refresh_token': String refreshToken,
+      'expires_in': int expiresIn,
+      'token_type': String tokenType,
     }) {
-      return (accessToken: accessToken, refreshToken: refreshToken);
+      return Credential(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+        expiresIn: expiresIn,
+        tokenType: tokenType,
+      );
     } else {
       if (kDebugMode) print('Failed to get access token: ${response.body}');
       throw MalException('Failed to get access token', response);
@@ -167,15 +181,20 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     try {
       final accessToken = await _storage.read(key: 'access_token');
       final refreshToken = await _storage.read(key: 'refresh_token');
+      final expiresIn = await _storage.read(key: 'expires_in');
       final username = await _storage.read(key: 'username');
-      if (accessToken == null || refreshToken == null || username == null) {
+      if (accessToken == null ||
+          refreshToken == null ||
+          username == null ||
+          expiresIn == null) {
         return AuthNotifierState.empty();
       }
       return AuthNotifierState(
+        username: username,
         credential: Credential(
           accessToken: accessToken,
           refreshToken: refreshToken,
-          username: username,
+          expiresIn: int.parse(expiresIn),
         ),
       );
     } on Exception catch (e) {
@@ -251,7 +270,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     if (codeVerifier == null) {
       throw StateError('Code verifier not found');
     }
-    final (accessToken: accessToken, refreshToken: refreshToken) = await ref
+    final credential = await ref
         .read(authRepositoryProvider)
         .exchangeCodeForToken(
           authorizationCode: authorizationCode,
@@ -263,15 +282,9 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
       final username = await retry(
         ref.read(malRepositoryProvider).fetchUsername,
       );
-      await _saveTokens(accessToken, refreshToken, username);
+      await _saveTokens(credential, username);
       state = AsyncValue.data(
-        AuthNotifierState(
-          credential: Credential(
-            accessToken: accessToken,
-            refreshToken: refreshToken,
-            username: username,
-          ),
-        ),
+        AuthNotifierState(username: username, credential: credential),
       );
     } on Exception catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
@@ -279,12 +292,15 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
   }
 
   static Future<void> _saveTokens(
-    String accessToken,
-    String refreshToken,
+    Credential credential,
     String username,
   ) async {
-    await _storage.write(key: 'access_token', value: accessToken);
-    await _storage.write(key: 'refresh_token', value: refreshToken);
+    await _storage.write(key: 'access_token', value: credential.accessToken);
+    await _storage.write(key: 'refresh_token', value: credential.refreshToken);
+    await _storage.write(
+      key: 'expires_in',
+      value: credential.expiresIn.toString(),
+    );
     await _storage.write(key: 'username', value: username);
   }
 
@@ -293,20 +309,11 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     String username,
   ) async {
     try {
-      final (
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      ) = await ref
+      final Credential credential = await ref
           .read(authRepositoryProvider)
           .refreshAccessToken(refreshToken: refreshToken, clientId: _clientId);
-      await _saveTokens(newAccessToken, newRefreshToken, username);
-      return AuthNotifierState(
-        credential: Credential(
-          accessToken: newAccessToken,
-          refreshToken: newRefreshToken,
-          username: username,
-        ),
-      );
+      await _saveTokens(credential, username);
+      return AuthNotifierState(username: username, credential: credential);
     } on Exception catch (e) {
       if (kDebugMode) print("refresh token error: $e");
       await logout();
@@ -317,6 +324,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
   Future<void> logout() async {
     await _storage.delete(key: 'access_token');
     await _storage.delete(key: 'refresh_token');
+    await _storage.delete(key: 'expires_in');
     await _storage.delete(key: 'username');
     state = AsyncValue.data(AuthNotifierState.empty());
   }
@@ -341,23 +349,26 @@ class AuthService {
 }
 
 class Credential {
+  final String tokenType;
   final String accessToken;
   final String refreshToken;
-  final String username;
+  final int expiresIn;
 
   const Credential({
+    this.tokenType = 'Bearer',
     required this.accessToken,
     required this.refreshToken,
-    required this.username,
+    required this.expiresIn,
   });
 }
 
 class AuthNotifierState {
   final Credential? credential;
+  final String? username;
   factory AuthNotifierState.empty() =>
       const AuthNotifierState(credential: null);
 
-  const AuthNotifierState({this.credential});
+  const AuthNotifierState({this.credential, this.username});
 
   bool get isLoggedIn => credential != null;
 }
