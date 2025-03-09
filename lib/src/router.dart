@@ -23,7 +23,7 @@ class HomeScreen extends ConsumerWidget {
                     ? [
                       Text('Logged in as: ${credential.username}'),
                       ElevatedButton(
-                        onPressed: ref.read(authProvider.notifier).logout,
+                        onPressed: ref.read(authServiceProvider).logout,
                         child: Text('Logout'),
                       ),
                     ]
@@ -40,9 +40,7 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class LoginScreen extends ConsumerWidget {
-  const LoginScreen({super.key, this.onResult});
-
-  final void Function(bool)? onResult;
+  const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,7 +54,7 @@ class LoginScreen extends ConsumerWidget {
             return credential == null
                 ? ElevatedButton(
                   onPressed: () async {
-                    ref.read(authProvider.notifier).login(onResult: onResult);
+                    ref.read(authServiceProvider).login();
                   },
                   child: Text('Login with MyAnimeList'),
                 )
@@ -65,7 +63,7 @@ class LoginScreen extends ConsumerWidget {
                   children: [
                     Text('Logged in as: ${credential.username}'),
                     ElevatedButton(
-                      onPressed: ref.read(authProvider.notifier).logout,
+                      onPressed: ref.read(authServiceProvider).logout,
                       child: Text('Logout'),
                     ),
                   ],

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:app_links/app_links.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -8,125 +9,52 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
-final authProvider = AsyncNotifierProvider<AuthNotifier, AuthNotifierState>(
-  () => AuthNotifier(),
-);
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  return AuthRepository();
+});
 
-class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
-  @override
-  Future<AuthNotifierState> build() async {
-    final state = await _loadTokens();
-    return state;
-  }
+class AuthRepository {
+  AuthRepository();
 
-  late final FlutterSecureStorage _storage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-  );
-
-  final String _clientId = '1c9a747601ef32d03d54067890189509';
-  // final String _clientSecret =
-  //     '14b9296d7b74983d13a714d7bbb568a6381a04a56119ab6c8946576d0a7f6e8f';
-  final String _redirectUri =
-      'dev.getboolean.anime-character-tierlist://oauth2redirect';
-
-  String _generateCodeVerifier([int length = 128]) {
-    final random = Random.secure();
-    return base64UrlEncode(
-      List.generate(length, (_) => random.nextInt(256)),
-    ).split('=')[0];
-  }
-
-  String _generateCodeChallenge(String verifier) {
-    return base64UrlEncode(
-      sha256.convert(ascii.encode(verifier)).bytes,
-    ).split('=')[0];
-  }
-
-  Future<AuthNotifierState> _loadTokens() async {
-    try {
-      final accessToken = await _storage.read(key: 'access_token');
-      final refreshToken = await _storage.read(key: 'refresh_token');
-      final username = await _storage.read(key: 'username');
-
-      if (accessToken != null && refreshToken != null) {
-        state = await AsyncValue.guard(
-          () => _refreshAccessToken(accessToken, refreshToken, username),
-        );
-      } else {
-        return AuthNotifierState.empty();
+  Future<({String accessToken, String refreshToken})> exchangeCodeForToken({
+    required String authorizationCode,
+    required String codeVerifier,
+    required String clientId,
+    required String redirectUri,
+    String? clientSecret,
+  }) async {
+    final url = Uri.parse('https://myanimelist.net/v1/oauth2/token');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {
+        'client_id': clientId,
+        if (clientSecret != null) 'client_secret': clientSecret,
+        'code': authorizationCode,
+        'code_verifier': codeVerifier,
+        'grant_type': 'authorization_code',
+        'redirect_uri': redirectUri,
+      },
+    );
+    if (response.statusCode != 200) {
+      if (kDebugMode) {
+        print('Failed to exchange code for token: ${response.body}');
       }
-    } catch (e) {
-      if (kDebugMode) print('Error loading tokens: $e');
-      return AuthNotifierState.empty();
+      throw Exception('Failed to exchange code for token');
     }
-    return AuthNotifierState.empty();
-  }
-
-  Future<void> login({void Function(bool)? onResult}) async {
-    final codeVerifier = _generateCodeChallenge(_generateCodeVerifier());
-    await _storage.delete(key: 'code_verifier');
-    _storage.write(key: 'code_verifier', value: codeVerifier);
-    final url =
-        'https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=$_clientId&code_challenge=$codeVerifier&code_challenge_method=plain&redirect_uri=$_redirectUri';
-
-    if (await canLaunchUrl(Uri.parse(url))) {
-      bool success = await launchUrl(
-        Uri.parse(url),
-        mode: LaunchMode.externalApplication,
-      );
-      onResult?.call(success);
+    final data = json.decode(response.body);
+    if (data case {
+      'access_token': String accessToken,
+      'refresh_token': String refreshToken,
+    }) {
+      return (accessToken: accessToken, refreshToken: refreshToken);
     } else {
-      throw Exception('Could not launch $url');
+      if (kDebugMode) print('Failed to get access token: ${response.body}');
+      throw Exception('Failed to get access token');
     }
   }
 
-  Future<void> exchangeCodeForToken(String authorizationCode) async {
-    state = const AsyncValue.loading();
-    try {
-      final url = Uri.parse('https://myanimelist.net/v1/oauth2/token');
-      final codeVerifier = await _storage.read(key: 'code_verifier');
-      if (codeVerifier == null) {
-        throw StateError('Code verifier not found');
-      }
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'client_id': _clientId,
-          // 'client_secret': _clientSecret,
-          'code': authorizationCode,
-          'code_verifier': codeVerifier,
-          'grant_type': 'authorization_code',
-          'redirect_uri': _redirectUri,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final accessToken = data['access_token'];
-        final refreshToken = data['refresh_token'];
-        final username = await _fetchUsername(accessToken);
-        await _saveTokens(accessToken, refreshToken, username);
-        state = AsyncValue.data(
-          AuthNotifierState(
-            credential: Credential(
-              accessToken: accessToken,
-              refreshToken: refreshToken,
-              username: username,
-            ),
-          ),
-        );
-      } else {
-        if (kDebugMode) print('Failed to get access token: ${response.body}');
-        state = AsyncValue.error('Login failed.', StackTrace.current);
-      }
-    } catch (e) {
-      state = AsyncValue.error(e, StackTrace.current);
-    }
-  }
-
-  Future<String> _fetchUsername(String accessToken) async {
+  Future<String> fetchUsername(String accessToken) async {
     final url = Uri.parse('https://api.myanimelist.net/v2/users/@me');
     final response = await http.get(
       url,
@@ -142,7 +70,195 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     }
   }
 
-  Future<void> _saveTokens(
+  Future<({String accessToken, String refreshToken})> refreshAccessToken({
+    required String refreshToken,
+    required String clientId,
+    String? clientSecret,
+  }) async {
+    final url = Uri.parse('https://myanimelist.net/v1/oauth2/token');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {
+        'grant_type': 'refresh_token',
+        'refresh_token': refreshToken,
+        'client_id': clientId,
+        if (clientSecret != null) 'client_secret': clientSecret,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      if (kDebugMode) {
+        print('Failed to refresh access token: ${response.body}');
+      }
+      throw Exception('Failed to refresh access token');
+    }
+    final data = json.decode(response.body);
+    if (data case {
+      'access_token': String accessToken,
+      'refresh_token': String refreshToken,
+    }) {
+      return (accessToken: accessToken, refreshToken: refreshToken);
+    } else {
+      if (kDebugMode) print('Failed to get access token: ${response.body}');
+      throw Exception('Failed to get access token');
+    }
+  }
+
+  Future<void> launchLoginUrl({
+    required String codeVerifier,
+    required String clientId,
+    required String redirectUrl,
+  }) async {
+    final url =
+        'https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=$clientId&code_challenge=$codeVerifier&code_challenge_method=plain&redirect_uri=$redirectUrl';
+
+    if (await canLaunchUrl(Uri.parse(url))) {
+      bool success = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!success) {
+        throw Exception('Failed to launch $url');
+      }
+    } else {
+      throw Exception('Could not launch $url');
+    }
+  }
+}
+
+final initialAppLinkProvider = FutureProvider<Uri?>((ref) async {
+  final appLinks = AppLinks();
+  return await appLinks.getInitialLink();
+});
+
+final appLinksStreamProvider = StreamProvider<Uri>((ref) async* {
+  final appLinks = AppLinks();
+  yield* appLinks.uriLinkStream;
+});
+
+final authProvider = AsyncNotifierProvider<AuthNotifier, AuthNotifierState>(() {
+  return AuthNotifier();
+});
+
+class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
+  @override
+  Future<AuthNotifierState> build() async {
+    final initialAppLink = await ref.watch(initialAppLinkProvider.future);
+    if (initialAppLink != null) {
+      _handleUrl(initialAppLink);
+    }
+    final appLink = ref.watch(appLinksStreamProvider);
+    appLink.whenData((uri) {
+      _handleUrl(uri);
+    });
+    return await _loadTokens();
+  }
+
+  void _handleUrl(Uri uri) {
+    if (uri.scheme == 'dev.getboolean.anime-character-tierlist' &&
+        uri.host == 'oauth2redirect') {
+      final code = uri.queryParameters['code'];
+      if (code != null) {
+        exchangeCodeForToken(code);
+      }
+    }
+  }
+
+  static final FlutterSecureStorage _storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+  );
+
+  static final String _clientId = '1c9a747601ef32d03d54067890189509';
+  // static final String _clientSecret =
+  //     '14b9296d7b74983d13a714d7bbb568a6381a04a56119ab6c8946576d0a7f6e8f';
+  static final String _redirectUrl =
+      'dev.getboolean.anime-character-tierlist://oauth2redirect';
+
+  Future<AuthNotifierState> _loadTokens() async {
+    try {
+      final refreshToken = await _storage.read(key: 'refresh_token');
+      final username = await _storage.read(key: 'username');
+
+      if (refreshToken != null) {
+        state = await AsyncValue.guard(
+          () => _refreshAccessToken(refreshToken, username),
+        );
+      } else {
+        return AuthNotifierState.empty();
+      }
+    } catch (e) {
+      if (kDebugMode) print('Error loading tokens: $e');
+      return AuthNotifierState.empty();
+    }
+    return AuthNotifierState.empty();
+  }
+
+  Future<void> saveCodeVerifier(String codeVerifier) async {
+    await _storage.delete(key: 'code_verifier');
+    await _storage.write(key: 'code_verifier', value: codeVerifier);
+  }
+
+  Future<void> login() async {
+    final codeVerifier = _generateCodeChallenge(_generateCodeVerifier());
+    await saveCodeVerifier(codeVerifier);
+    await ref
+        .read(authRepositoryProvider)
+        .launchLoginUrl(
+          codeVerifier: codeVerifier,
+          clientId: _clientId,
+          redirectUrl: _redirectUrl,
+        );
+  }
+
+  static String _generateCodeVerifier([int length = 128]) {
+    final random = Random.secure();
+    return base64UrlEncode(
+      List.generate(length, (_) => random.nextInt(256)),
+    ).split('=')[0];
+  }
+
+  static String _generateCodeChallenge(String verifier) {
+    return base64UrlEncode(
+      sha256.convert(ascii.encode(verifier)).bytes,
+    ).split('=')[0];
+  }
+
+  Future<void> exchangeCodeForToken(String authorizationCode) async {
+    state = const AsyncValue.loading();
+    final codeVerifier = await _storage.read(key: 'code_verifier');
+    if (codeVerifier == null) {
+      throw StateError('Code verifier not found');
+    }
+    final (accessToken: accessToken, refreshToken: refreshToken) = await ref
+        .read(authRepositoryProvider)
+        .exchangeCodeForToken(
+          authorizationCode: authorizationCode,
+          codeVerifier: codeVerifier,
+          clientId: _clientId,
+          redirectUri: _redirectUrl,
+        );
+    try {
+      final username = await ref
+          .read(authRepositoryProvider)
+          .fetchUsername(accessToken);
+      await _saveTokens(accessToken, refreshToken, username);
+      state = AsyncValue.data(
+        AuthNotifierState(
+          credential: Credential(
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            username: username,
+          ),
+        ),
+      );
+    } catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
+    }
+  }
+
+  static Future<void> _saveTokens(
     String accessToken,
     String refreshToken,
     String username,
@@ -153,58 +269,54 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
   }
 
   Future<AuthNotifierState> _refreshAccessToken(
-    String accessToken,
     String refreshToken,
     String? username,
   ) async {
     try {
-      final url = Uri.parse('https://myanimelist.net/v1/oauth2/token');
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'grant_type': 'refresh_token',
-          'refresh_token': refreshToken,
-          'client_id': _clientId,
-          // 'client_secret': _clientSecret,
-        },
+      final (
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      ) = await ref
+          .read(authRepositoryProvider)
+          .refreshAccessToken(refreshToken: refreshToken, clientId: _clientId);
+      await _saveTokens(newAccessToken, newRefreshToken, username!);
+      return AuthNotifierState(
+        credential: Credential(
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+          username: username,
+        ),
       );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final newAccessToken = data['access_token'];
-        final newRefreshToken = data['refresh_token'];
-        await _saveTokens(newAccessToken, newRefreshToken, username!);
-        return AuthNotifierState(
-          credential: Credential(
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-            username: username,
-          ),
-        );
-      } else {
-        if (kDebugMode) {
-          print('Failed to refresh access token: ${response.body}');
-        }
-        await _clearTokens();
-        return AuthNotifierState.empty();
-      }
     } catch (e) {
       if (kDebugMode) print("refresh token error: $e");
-      await _clearTokens();
+      await logout();
       return AuthNotifierState.empty();
     }
   }
 
-  Future<void> _clearTokens() async {
+  Future<void> logout() async {
     await _storage.delete(key: 'access_token');
     await _storage.delete(key: 'refresh_token');
     await _storage.delete(key: 'username');
     state = AsyncValue.data(AuthNotifierState.empty());
   }
+}
+
+final authServiceProvider = Provider<AuthService>((ref) {
+  return AuthService(ref);
+});
+
+class AuthService {
+  final Ref _ref;
+
+  AuthService(this._ref);
+
+  Future<void> login() async {
+    await _ref.read(authProvider.notifier).login();
+  }
 
   Future<void> logout() async {
-    await _clearTokens();
+    await _ref.read(authProvider.notifier).logout();
   }
 }
 
