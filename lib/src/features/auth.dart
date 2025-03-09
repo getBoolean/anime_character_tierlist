@@ -18,8 +18,6 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 class AuthRepository {
   AuthRepository();
 
-  // Rename to MalApi and combine with MalRepository in mal.dart
-
   Future<Credential> exchangeCodeForToken({
     required String authorizationCode,
     required String codeVerifier,
