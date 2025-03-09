@@ -66,3 +66,29 @@ class MalRepository {
     }
   }
 }
+
+final malServiceProvider = Provider<MalService>((ref) {
+  return MalService(ref.watch(malRepositoryProvider));
+});
+
+class MalService {
+  final MalRepository _repository;
+
+  MalService(this._repository);
+
+  Future<List<Anime>> getUserAnime({
+    required String userName,
+    required String status,
+    required String accessToken,
+  }) async {
+    return _repository.getUserAnime(
+      userName: userName,
+      status: status,
+      accessToken: accessToken,
+    );
+  }
+
+  Future<String> fetchUsername(String accessToken) async {
+    return _repository.fetchUsername(accessToken);
+  }
+}
