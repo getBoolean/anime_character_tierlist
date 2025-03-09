@@ -21,7 +21,7 @@ class HomeScreen extends ConsumerWidget {
                 final credential = state.credential;
                 return credential != null
                     ? [
-                      Text('Logged in as: ${credential.username}'),
+                      Text('Logged in as: ${state.username}'),
                       ElevatedButton(
                         onPressed: ref.read(authServiceProvider).logout,
                         child: Text('Logout'),
@@ -61,7 +61,7 @@ class LoginScreen extends ConsumerWidget {
                 : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Logged in as: ${credential.username}'),
+                    Text('Logged in as: ${state.username}'),
                     ElevatedButton(
                       onPressed: ref.read(authServiceProvider).logout,
                       child: Text('Logout'),
