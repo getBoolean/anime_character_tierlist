@@ -147,7 +147,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
         uri.host == 'oauth2redirect') {
       final code = uri.queryParameters['code'];
       if (code != null) {
-        exchangeCodeForToken(code);
+        _exchangeCodeForToken(code);
       }
     }
   }
@@ -245,7 +245,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     }
   }
 
-  Future<void> exchangeCodeForToken(String authorizationCode) async {
+  Future<void> _exchangeCodeForToken(String authorizationCode) async {
     state = const AsyncValue.loading();
     final codeVerifier = await _storage.read(key: 'code_verifier');
     if (codeVerifier == null) {
