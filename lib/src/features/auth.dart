@@ -42,7 +42,7 @@ class AuthRepository {
       if (kDebugMode) {
         print('Failed to exchange code for token: ${response.body}');
       }
-      throw Exception('Failed to exchange code for token');
+      throw MalException('Failed to exchange code for token', response);
     }
     final data = json.decode(response.body);
     if (data case {
@@ -52,7 +52,7 @@ class AuthRepository {
       return (accessToken: accessToken, refreshToken: refreshToken);
     } else {
       if (kDebugMode) print('Failed to get access token: ${response.body}');
-      throw Exception('Failed to get access token');
+      throw MalException('Failed to get access token', response);
     }
   }
 
@@ -77,7 +77,7 @@ class AuthRepository {
       if (kDebugMode) {
         print('Failed to refresh access token: ${response.body}');
       }
-      throw Exception('Failed to refresh access token');
+      throw MalException('Failed to refresh access token', response);
     }
     final data = json.decode(response.body);
     if (data case {
@@ -87,7 +87,7 @@ class AuthRepository {
       return (accessToken: accessToken, refreshToken: refreshToken);
     } else {
       if (kDebugMode) print('Failed to get access token: ${response.body}');
-      throw Exception('Failed to get access token');
+      throw MalException('Failed to get access token', response);
     }
   }
 
@@ -178,7 +178,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
           username: username,
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       if (kDebugMode) print('Error loading tokens: $e');
       return AuthNotifierState.empty();
     }
@@ -192,13 +192,17 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
   Future<void> login() async {
     final codeVerifier = _generateCodeChallenge(_generateCodeVerifier());
     await saveCodeVerifier(codeVerifier);
-    await ref
-        .read(authRepositoryProvider)
-        .launchLoginUrl(
-          codeVerifier: codeVerifier,
-          clientId: _clientId,
-          redirectUrl: _redirectUrl,
-        );
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .launchLoginUrl(
+            codeVerifier: codeVerifier,
+            clientId: _clientId,
+            redirectUrl: _redirectUrl,
+          );
+    } on Exception catch (e) {
+      state = AsyncValue.error(e, StackTrace.current);
+    }
   }
 
   static String _generateCodeVerifier([int length = 128]) {
@@ -236,9 +240,8 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
           throw StateError('Access token not found');
         }
         return await function(newAccessToken);
-      } else {
-        rethrow;
       }
+      rethrow;
     }
   }
 
@@ -270,7 +273,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
           ),
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
     }
   }
@@ -304,7 +307,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
           username: username,
         ),
       );
-    } catch (e) {
+    } on Exception catch (e) {
       if (kDebugMode) print("refresh token error: $e");
       await logout();
       return AuthNotifierState.empty();
