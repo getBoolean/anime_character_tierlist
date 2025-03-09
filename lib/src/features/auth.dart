@@ -18,6 +18,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 class AuthRepository {
   AuthRepository();
 
+  // Rename to MalApi and combine with MalRepository in mal.dart
+
   Future<Credential> exchangeCodeForToken({
     required String authorizationCode,
     required String codeVerifier,
@@ -147,21 +149,23 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
   Future<AuthNotifierState> build() async {
     final initialAppLink = await ref.watch(initialAppLinkProvider.future);
     if (initialAppLink != null) {
-      _handleUrl(initialAppLink);
+      await _handleUrl(initialAppLink);
     }
+    await _checkExpiredToken();
+
     final appLink = ref.watch(appLinksStreamProvider);
-    appLink.whenData((uri) {
-      _handleUrl(uri);
+    appLink.whenData((uri) async {
+      await _handleUrl(uri);
     });
     return await _loadTokens();
   }
 
-  void _handleUrl(Uri uri) {
+  Future<void> _handleUrl(Uri uri) async {
     if (uri.scheme == 'dev.getboolean.anime-character-tierlist' &&
         uri.host == 'oauth2redirect') {
       final code = uri.queryParameters['code'];
       if (code != null) {
-        _exchangeCodeForToken(code);
+        await _exchangeCodeForToken(code);
       }
     }
   }
@@ -181,20 +185,20 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     try {
       final accessToken = await _storage.read(key: 'access_token');
       final refreshToken = await _storage.read(key: 'refresh_token');
-      final expiresIn = await _storage.read(key: 'expires_in');
+      final expiresAt = await _storage.read(key: 'expires_at');
       final username = await _storage.read(key: 'username');
       if (accessToken == null ||
           refreshToken == null ||
           username == null ||
-          expiresIn == null) {
+          expiresAt == null) {
         return AuthNotifierState.empty();
       }
       return AuthNotifierState(
         username: username,
-        credential: Credential(
+        credential: Credential.expiresAt(
           accessToken: accessToken,
           refreshToken: refreshToken,
-          expiresIn: int.parse(expiresIn),
+          expiresAt: DateTime.fromMicrosecondsSinceEpoch(int.parse(expiresAt)),
         ),
       );
     } on Exception catch (e) {
@@ -206,6 +210,17 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
   Future<void> saveCodeVerifier(String codeVerifier) async {
     await _storage.delete(key: 'code_verifier');
     await _storage.write(key: 'code_verifier', value: codeVerifier);
+  }
+
+  Future<void> _checkExpiredToken() async {
+    final credential = state.unwrapPrevious().valueOrNull?.credential;
+    if (credential == null) {
+      return;
+    }
+
+    if (DateTime.now().isAfter(credential.expiresAt)) {
+      await _refreshAccessToken(credential.refreshToken);
+    }
   }
 
   Future<void> login() async {
@@ -237,13 +252,19 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     ).split('=')[0];
   }
 
-  Future<T> retry<T>(Future<T> Function(String accessToken) function) async {
-    final refreshToken = await _storage.read(key: 'refresh_token');
+  Future<T> retry<T>(
+    Future<T> Function(String accessToken) function, {
+    String? overrideAccessToken,
+    String? overrideRefreshToken,
+  }) async {
+    final refreshToken =
+        overrideRefreshToken ?? await _storage.read(key: 'refresh_token');
     if (refreshToken == null) {
       throw StateError('Refresh token not found');
     }
 
-    final accessToken = await _storage.read(key: 'access_token');
+    final accessToken =
+        overrideAccessToken ?? await _storage.read(key: 'access_token');
     if (accessToken == null) {
       throw StateError('Access token not found');
     }
@@ -253,7 +274,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
       if (e.response.statusCode == 401 &&
           (e.response.headers['www-authenticate']?.contains('invalid_token') ??
               false)) {
-        await _refreshAccessToken(refreshToken, accessToken);
+        await _refreshAccessToken(refreshToken);
         final newAccessToken = await _storage.read(key: 'access_token');
         if (newAccessToken == null) {
           throw StateError('Access token not found');
@@ -279,9 +300,9 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
           redirectUri: _redirectUrl,
         );
     try {
-      final username = await retry(
-        ref.read(malRepositoryProvider).fetchUsername,
-      );
+      final username = await ref
+          .read(malRepositoryProvider)
+          .fetchUsername(credential.accessToken);
       await _saveTokens(credential, username);
       state = AsyncValue.data(
         AuthNotifierState(username: username, credential: credential),
@@ -298,20 +319,20 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     await _storage.write(key: 'access_token', value: credential.accessToken);
     await _storage.write(key: 'refresh_token', value: credential.refreshToken);
     await _storage.write(
-      key: 'expires_in',
-      value: credential.expiresIn.toString(),
+      key: 'expires_at',
+      value: credential.expiresAt.millisecondsSinceEpoch.toString(),
     );
     await _storage.write(key: 'username', value: username);
   }
 
-  Future<AuthNotifierState> _refreshAccessToken(
-    String refreshToken,
-    String username,
-  ) async {
+  Future<AuthNotifierState> _refreshAccessToken(String refreshToken) async {
     try {
       final Credential credential = await ref
           .read(authRepositoryProvider)
           .refreshAccessToken(refreshToken: refreshToken, clientId: _clientId);
+      final username = await ref
+          .read(malRepositoryProvider)
+          .fetchUsername(credential.accessToken);
       await _saveTokens(credential, username);
       return AuthNotifierState(username: username, credential: credential);
     } on Exception catch (e) {
@@ -352,13 +373,20 @@ class Credential {
   final String tokenType;
   final String accessToken;
   final String refreshToken;
-  final int expiresIn;
+  final DateTime expiresAt;
 
-  const Credential({
+  Credential({
     this.tokenType = 'Bearer',
     required this.accessToken,
     required this.refreshToken,
-    required this.expiresIn,
+    required int expiresIn,
+  }) : expiresAt = DateTime.now().add(Duration(seconds: expiresIn));
+
+  Credential.expiresAt({
+    this.tokenType = 'Bearer',
+    required this.accessToken,
+    required this.refreshToken,
+    required this.expiresAt,
   });
 }
 
