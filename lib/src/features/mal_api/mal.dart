@@ -155,10 +155,8 @@ class MalRepository {
 
 final malServiceProvider = Provider<MalService>((ref) {
   final authState = ref.watch(authNotifierProvider);
-  return MalService(
-    ref.watch(malRepositoryProvider),
-    authState.unwrapPrevious().valueOrNull,
-  );
+  final malRepo = ref.watch(malRepositoryProvider);
+  return MalService(malRepo, authState.unwrapPrevious().valueOrNull);
 });
 
 class MalService {
