@@ -33,9 +33,10 @@ class MalSeasonalAnimePage extends MalPage<MalAnime>
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class MalPaging with MalPagingMappable {
+  final String? previous;
   final String? next;
 
-  const MalPaging({required this.next});
+  const MalPaging({required this.previous, required this.next});
 
   factory MalPaging.fromJson(String json) => MalPagingMapper.fromJson(json);
   factory MalPaging.fromMap(Map<String, dynamic> map) =>

@@ -141,16 +141,20 @@ class MalPagingMapper extends ClassMapperBase<MalPaging> {
   @override
   final String id = 'MalPaging';
 
+  static String? _$previous(MalPaging v) => v.previous;
+  static const Field<MalPaging, String> _f$previous =
+      Field('previous', _$previous);
   static String? _$next(MalPaging v) => v.next;
   static const Field<MalPaging, String> _f$next = Field('next', _$next);
 
   @override
   final MappableFields<MalPaging> fields = const {
+    #previous: _f$previous,
     #next: _f$next,
   };
 
   static MalPaging _instantiate(DecodingData data) {
-    return MalPaging(next: data.dec(_f$next));
+    return MalPaging(previous: data.dec(_f$previous), next: data.dec(_f$next));
   }
 
   @override
@@ -203,7 +207,7 @@ extension MalPagingValueCopy<$R, $Out> on ObjectCopyWith<$R, MalPaging, $Out> {
 
 abstract class MalPagingCopyWith<$R, $In extends MalPaging, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? next});
+  $R call({String? previous, String? next});
   MalPagingCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -216,11 +220,15 @@ class _MalPagingCopyWithImpl<$R, $Out>
   late final ClassMapperBase<MalPaging> $mapper =
       MalPagingMapper.ensureInitialized();
   @override
-  $R call({Object? next = $none}) =>
-      $apply(FieldCopyWithData({if (next != $none) #next: next}));
+  $R call({Object? previous = $none, Object? next = $none}) =>
+      $apply(FieldCopyWithData({
+        if (previous != $none) #previous: previous,
+        if (next != $none) #next: next
+      }));
   @override
-  MalPaging $make(CopyWithData data) =>
-      MalPaging(next: data.get(#next, or: $value.next));
+  MalPaging $make(CopyWithData data) => MalPaging(
+      previous: data.get(#previous, or: $value.previous),
+      next: data.get(#next, or: $value.next));
 
   @override
   MalPagingCopyWith<$R2, MalPaging, $Out2> $chain<$R2, $Out2>(
