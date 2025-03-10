@@ -370,28 +370,28 @@ class MalAnimeRecommendation with MalAnimeRecommendationMappable {
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
-class MalAnimeRanking with MalAnimeRankingMappable {
+class MalEntryRanking with MalEntryRankingMappable {
   final MalEntry node;
-  final MalAnimeRankingItem rank;
+  final MalEntryRankingItem rank;
 
-  const MalAnimeRanking({required this.node, required this.rank});
+  const MalEntryRanking({required this.node, required this.rank});
 
-  factory MalAnimeRanking.fromJson(String json) =>
-      MalAnimeRankingMapper.fromJson(json);
-  factory MalAnimeRanking.fromMap(Map<String, dynamic> map) =>
-      MalAnimeRankingMapper.fromMap(map);
+  factory MalEntryRanking.fromJson(String json) =>
+      MalEntryRankingMapper.fromJson(json);
+  factory MalEntryRanking.fromMap(Map<String, dynamic> map) =>
+      MalEntryRankingMapper.fromMap(map);
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
-class MalAnimeRankingItem with MalAnimeRankingItemMappable {
+class MalEntryRankingItem with MalEntryRankingItemMappable {
   final int rank;
 
-  const MalAnimeRankingItem({required this.rank});
+  const MalEntryRankingItem({required this.rank});
 
-  factory MalAnimeRankingItem.fromJson(String json) =>
-      MalAnimeRankingItemMapper.fromJson(json);
-  factory MalAnimeRankingItem.fromMap(Map<String, dynamic> map) =>
-      MalAnimeRankingItemMapper.fromMap(map);
+  factory MalEntryRankingItem.fromJson(String json) =>
+      MalEntryRankingItemMapper.fromJson(json);
+  factory MalEntryRankingItem.fromMap(Map<String, dynamic> map) =>
+      MalEntryRankingItemMapper.fromMap(map);
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)

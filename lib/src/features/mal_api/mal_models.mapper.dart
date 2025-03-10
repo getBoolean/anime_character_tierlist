@@ -3746,233 +3746,233 @@ class _MalSerializationNodeCopyWithImpl<$R, $Out>
           _MalSerializationNodeCopyWithImpl($value, $cast, t);
 }
 
-class MalAnimeRankingMapper extends ClassMapperBase<MalAnimeRanking> {
-  MalAnimeRankingMapper._();
+class MalEntryRankingMapper extends ClassMapperBase<MalEntryRanking> {
+  MalEntryRankingMapper._();
 
-  static MalAnimeRankingMapper? _instance;
-  static MalAnimeRankingMapper ensureInitialized() {
+  static MalEntryRankingMapper? _instance;
+  static MalEntryRankingMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = MalAnimeRankingMapper._());
+      MapperContainer.globals.use(_instance = MalEntryRankingMapper._());
       MalEntryMapper.ensureInitialized();
-      MalAnimeRankingItemMapper.ensureInitialized();
+      MalEntryRankingItemMapper.ensureInitialized();
     }
     return _instance!;
   }
 
   @override
-  final String id = 'MalAnimeRanking';
+  final String id = 'MalEntryRanking';
 
-  static MalEntry _$node(MalAnimeRanking v) => v.node;
-  static const Field<MalAnimeRanking, MalEntry> _f$node = Field('node', _$node);
-  static MalAnimeRankingItem _$rank(MalAnimeRanking v) => v.rank;
-  static const Field<MalAnimeRanking, MalAnimeRankingItem> _f$rank =
+  static MalEntry _$node(MalEntryRanking v) => v.node;
+  static const Field<MalEntryRanking, MalEntry> _f$node = Field('node', _$node);
+  static MalEntryRankingItem _$rank(MalEntryRanking v) => v.rank;
+  static const Field<MalEntryRanking, MalEntryRankingItem> _f$rank =
       Field('rank', _$rank);
 
   @override
-  final MappableFields<MalAnimeRanking> fields = const {
+  final MappableFields<MalEntryRanking> fields = const {
     #node: _f$node,
     #rank: _f$rank,
   };
 
-  static MalAnimeRanking _instantiate(DecodingData data) {
-    return MalAnimeRanking(node: data.dec(_f$node), rank: data.dec(_f$rank));
+  static MalEntryRanking _instantiate(DecodingData data) {
+    return MalEntryRanking(node: data.dec(_f$node), rank: data.dec(_f$rank));
   }
 
   @override
   final Function instantiate = _instantiate;
 
-  static MalAnimeRanking fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<MalAnimeRanking>(map);
+  static MalEntryRanking fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<MalEntryRanking>(map);
   }
 
-  static MalAnimeRanking fromJson(String json) {
-    return ensureInitialized().decodeJson<MalAnimeRanking>(json);
+  static MalEntryRanking fromJson(String json) {
+    return ensureInitialized().decodeJson<MalEntryRanking>(json);
   }
 }
 
-mixin MalAnimeRankingMappable {
+mixin MalEntryRankingMappable {
   String toJson() {
-    return MalAnimeRankingMapper.ensureInitialized()
-        .encodeJson<MalAnimeRanking>(this as MalAnimeRanking);
+    return MalEntryRankingMapper.ensureInitialized()
+        .encodeJson<MalEntryRanking>(this as MalEntryRanking);
   }
 
   Map<String, dynamic> toMap() {
-    return MalAnimeRankingMapper.ensureInitialized()
-        .encodeMap<MalAnimeRanking>(this as MalAnimeRanking);
+    return MalEntryRankingMapper.ensureInitialized()
+        .encodeMap<MalEntryRanking>(this as MalEntryRanking);
   }
 
-  MalAnimeRankingCopyWith<MalAnimeRanking, MalAnimeRanking, MalAnimeRanking>
-      get copyWith => _MalAnimeRankingCopyWithImpl(
-          this as MalAnimeRanking, $identity, $identity);
+  MalEntryRankingCopyWith<MalEntryRanking, MalEntryRanking, MalEntryRanking>
+      get copyWith => _MalEntryRankingCopyWithImpl(
+          this as MalEntryRanking, $identity, $identity);
   @override
   String toString() {
-    return MalAnimeRankingMapper.ensureInitialized()
-        .stringifyValue(this as MalAnimeRanking);
+    return MalEntryRankingMapper.ensureInitialized()
+        .stringifyValue(this as MalEntryRanking);
   }
 
   @override
   bool operator ==(Object other) {
-    return MalAnimeRankingMapper.ensureInitialized()
-        .equalsValue(this as MalAnimeRanking, other);
+    return MalEntryRankingMapper.ensureInitialized()
+        .equalsValue(this as MalEntryRanking, other);
   }
 
   @override
   int get hashCode {
-    return MalAnimeRankingMapper.ensureInitialized()
-        .hashValue(this as MalAnimeRanking);
+    return MalEntryRankingMapper.ensureInitialized()
+        .hashValue(this as MalEntryRanking);
   }
 }
 
-extension MalAnimeRankingValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, MalAnimeRanking, $Out> {
-  MalAnimeRankingCopyWith<$R, MalAnimeRanking, $Out> get $asMalAnimeRanking =>
-      $base.as((v, t, t2) => _MalAnimeRankingCopyWithImpl(v, t, t2));
+extension MalEntryRankingValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, MalEntryRanking, $Out> {
+  MalEntryRankingCopyWith<$R, MalEntryRanking, $Out> get $asMalEntryRanking =>
+      $base.as((v, t, t2) => _MalEntryRankingCopyWithImpl(v, t, t2));
 }
 
-abstract class MalAnimeRankingCopyWith<$R, $In extends MalAnimeRanking, $Out>
+abstract class MalEntryRankingCopyWith<$R, $In extends MalEntryRanking, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   MalEntryCopyWith<$R, MalEntry, MalEntry> get node;
-  MalAnimeRankingItemCopyWith<$R, MalAnimeRankingItem, MalAnimeRankingItem>
+  MalEntryRankingItemCopyWith<$R, MalEntryRankingItem, MalEntryRankingItem>
       get rank;
-  $R call({MalEntry? node, MalAnimeRankingItem? rank});
-  MalAnimeRankingCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+  $R call({MalEntry? node, MalEntryRankingItem? rank});
+  MalEntryRankingCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
 
-class _MalAnimeRankingCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, MalAnimeRanking, $Out>
-    implements MalAnimeRankingCopyWith<$R, MalAnimeRanking, $Out> {
-  _MalAnimeRankingCopyWithImpl(super.value, super.then, super.then2);
+class _MalEntryRankingCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, MalEntryRanking, $Out>
+    implements MalEntryRankingCopyWith<$R, MalEntryRanking, $Out> {
+  _MalEntryRankingCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<MalAnimeRanking> $mapper =
-      MalAnimeRankingMapper.ensureInitialized();
+  late final ClassMapperBase<MalEntryRanking> $mapper =
+      MalEntryRankingMapper.ensureInitialized();
   @override
   MalEntryCopyWith<$R, MalEntry, MalEntry> get node =>
       $value.node.copyWith.$chain((v) => call(node: v));
   @override
-  MalAnimeRankingItemCopyWith<$R, MalAnimeRankingItem, MalAnimeRankingItem>
+  MalEntryRankingItemCopyWith<$R, MalEntryRankingItem, MalEntryRankingItem>
       get rank => $value.rank.copyWith.$chain((v) => call(rank: v));
   @override
-  $R call({MalEntry? node, MalAnimeRankingItem? rank}) =>
+  $R call({MalEntry? node, MalEntryRankingItem? rank}) =>
       $apply(FieldCopyWithData(
           {if (node != null) #node: node, if (rank != null) #rank: rank}));
   @override
-  MalAnimeRanking $make(CopyWithData data) => MalAnimeRanking(
+  MalEntryRanking $make(CopyWithData data) => MalEntryRanking(
       node: data.get(#node, or: $value.node),
       rank: data.get(#rank, or: $value.rank));
 
   @override
-  MalAnimeRankingCopyWith<$R2, MalAnimeRanking, $Out2> $chain<$R2, $Out2>(
+  MalEntryRankingCopyWith<$R2, MalEntryRanking, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _MalAnimeRankingCopyWithImpl($value, $cast, t);
+      _MalEntryRankingCopyWithImpl($value, $cast, t);
 }
 
-class MalAnimeRankingItemMapper extends ClassMapperBase<MalAnimeRankingItem> {
-  MalAnimeRankingItemMapper._();
+class MalEntryRankingItemMapper extends ClassMapperBase<MalEntryRankingItem> {
+  MalEntryRankingItemMapper._();
 
-  static MalAnimeRankingItemMapper? _instance;
-  static MalAnimeRankingItemMapper ensureInitialized() {
+  static MalEntryRankingItemMapper? _instance;
+  static MalEntryRankingItemMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = MalAnimeRankingItemMapper._());
+      MapperContainer.globals.use(_instance = MalEntryRankingItemMapper._());
     }
     return _instance!;
   }
 
   @override
-  final String id = 'MalAnimeRankingItem';
+  final String id = 'MalEntryRankingItem';
 
-  static int _$rank(MalAnimeRankingItem v) => v.rank;
-  static const Field<MalAnimeRankingItem, int> _f$rank = Field('rank', _$rank);
+  static int _$rank(MalEntryRankingItem v) => v.rank;
+  static const Field<MalEntryRankingItem, int> _f$rank = Field('rank', _$rank);
 
   @override
-  final MappableFields<MalAnimeRankingItem> fields = const {
+  final MappableFields<MalEntryRankingItem> fields = const {
     #rank: _f$rank,
   };
 
-  static MalAnimeRankingItem _instantiate(DecodingData data) {
-    return MalAnimeRankingItem(rank: data.dec(_f$rank));
+  static MalEntryRankingItem _instantiate(DecodingData data) {
+    return MalEntryRankingItem(rank: data.dec(_f$rank));
   }
 
   @override
   final Function instantiate = _instantiate;
 
-  static MalAnimeRankingItem fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<MalAnimeRankingItem>(map);
+  static MalEntryRankingItem fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<MalEntryRankingItem>(map);
   }
 
-  static MalAnimeRankingItem fromJson(String json) {
-    return ensureInitialized().decodeJson<MalAnimeRankingItem>(json);
+  static MalEntryRankingItem fromJson(String json) {
+    return ensureInitialized().decodeJson<MalEntryRankingItem>(json);
   }
 }
 
-mixin MalAnimeRankingItemMappable {
+mixin MalEntryRankingItemMappable {
   String toJson() {
-    return MalAnimeRankingItemMapper.ensureInitialized()
-        .encodeJson<MalAnimeRankingItem>(this as MalAnimeRankingItem);
+    return MalEntryRankingItemMapper.ensureInitialized()
+        .encodeJson<MalEntryRankingItem>(this as MalEntryRankingItem);
   }
 
   Map<String, dynamic> toMap() {
-    return MalAnimeRankingItemMapper.ensureInitialized()
-        .encodeMap<MalAnimeRankingItem>(this as MalAnimeRankingItem);
+    return MalEntryRankingItemMapper.ensureInitialized()
+        .encodeMap<MalEntryRankingItem>(this as MalEntryRankingItem);
   }
 
-  MalAnimeRankingItemCopyWith<MalAnimeRankingItem, MalAnimeRankingItem,
-          MalAnimeRankingItem>
-      get copyWith => _MalAnimeRankingItemCopyWithImpl(
-          this as MalAnimeRankingItem, $identity, $identity);
+  MalEntryRankingItemCopyWith<MalEntryRankingItem, MalEntryRankingItem,
+          MalEntryRankingItem>
+      get copyWith => _MalEntryRankingItemCopyWithImpl(
+          this as MalEntryRankingItem, $identity, $identity);
   @override
   String toString() {
-    return MalAnimeRankingItemMapper.ensureInitialized()
-        .stringifyValue(this as MalAnimeRankingItem);
+    return MalEntryRankingItemMapper.ensureInitialized()
+        .stringifyValue(this as MalEntryRankingItem);
   }
 
   @override
   bool operator ==(Object other) {
-    return MalAnimeRankingItemMapper.ensureInitialized()
-        .equalsValue(this as MalAnimeRankingItem, other);
+    return MalEntryRankingItemMapper.ensureInitialized()
+        .equalsValue(this as MalEntryRankingItem, other);
   }
 
   @override
   int get hashCode {
-    return MalAnimeRankingItemMapper.ensureInitialized()
-        .hashValue(this as MalAnimeRankingItem);
+    return MalEntryRankingItemMapper.ensureInitialized()
+        .hashValue(this as MalEntryRankingItem);
   }
 }
 
-extension MalAnimeRankingItemValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, MalAnimeRankingItem, $Out> {
-  MalAnimeRankingItemCopyWith<$R, MalAnimeRankingItem, $Out>
-      get $asMalAnimeRankingItem =>
-          $base.as((v, t, t2) => _MalAnimeRankingItemCopyWithImpl(v, t, t2));
+extension MalEntryRankingItemValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, MalEntryRankingItem, $Out> {
+  MalEntryRankingItemCopyWith<$R, MalEntryRankingItem, $Out>
+      get $asMalEntryRankingItem =>
+          $base.as((v, t, t2) => _MalEntryRankingItemCopyWithImpl(v, t, t2));
 }
 
-abstract class MalAnimeRankingItemCopyWith<$R, $In extends MalAnimeRankingItem,
+abstract class MalEntryRankingItemCopyWith<$R, $In extends MalEntryRankingItem,
     $Out> implements ClassCopyWith<$R, $In, $Out> {
   $R call({int? rank});
-  MalAnimeRankingItemCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
+  MalEntryRankingItemCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
 
-class _MalAnimeRankingItemCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, MalAnimeRankingItem, $Out>
-    implements MalAnimeRankingItemCopyWith<$R, MalAnimeRankingItem, $Out> {
-  _MalAnimeRankingItemCopyWithImpl(super.value, super.then, super.then2);
+class _MalEntryRankingItemCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, MalEntryRankingItem, $Out>
+    implements MalEntryRankingItemCopyWith<$R, MalEntryRankingItem, $Out> {
+  _MalEntryRankingItemCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<MalAnimeRankingItem> $mapper =
-      MalAnimeRankingItemMapper.ensureInitialized();
+  late final ClassMapperBase<MalEntryRankingItem> $mapper =
+      MalEntryRankingItemMapper.ensureInitialized();
   @override
   $R call({int? rank}) =>
       $apply(FieldCopyWithData({if (rank != null) #rank: rank}));
   @override
-  MalAnimeRankingItem $make(CopyWithData data) =>
-      MalAnimeRankingItem(rank: data.get(#rank, or: $value.rank));
+  MalEntryRankingItem $make(CopyWithData data) =>
+      MalEntryRankingItem(rank: data.get(#rank, or: $value.rank));
 
   @override
-  MalAnimeRankingItemCopyWith<$R2, MalAnimeRankingItem, $Out2>
+  MalEntryRankingItemCopyWith<$R2, MalEntryRankingItem, $Out2>
       $chain<$R2, $Out2>(Then<$Out2, $R2> t) =>
-          _MalAnimeRankingItemCopyWithImpl($value, $cast, t);
+          _MalEntryRankingItemCopyWithImpl($value, $cast, t);
 }
 
 class MalAnimeListStatusMapper extends ClassMapperBase<MalAnimeListStatus> {
