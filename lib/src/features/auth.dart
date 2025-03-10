@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:anime_character_tierlist/src/exceptions/mal_exception.dart';
-import 'package:anime_character_tierlist/src/features/mal.dart';
+import 'package:anime_character_tierlist/src/features/mal_api/mal.dart';
 import 'package:app_links/app_links.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';

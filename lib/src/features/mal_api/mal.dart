@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:anime_character_tierlist/src/exceptions/mal_exception.dart';
+import 'package:anime_character_tierlist/src/features/mal_api/mal_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -13,14 +14,14 @@ final malRepositoryProvider = Provider<MalRepository>((ref) {
 class MalRepository {
   final Jikan jikan = Jikan();
 
-  Future<List<Anime>> getUserAnime({
+  Future<List<MalUserAnime>> getUserAnime({
     required String userName,
     required String status,
     required String accessToken,
   }) async {
     String? url =
         'https://api.myanimelist.net/v2/users/$userName/animelist?status=$status&sort=list_score&limit=100&offset=0';
-    List<Anime> animeList = [];
+    List<MalUserAnime> animeList = [];
     do {
       final response = await http.get(
         Uri.parse(url!),
@@ -32,19 +33,9 @@ class MalRepository {
 
       // TODO: Test what paging looks like for final page
       final json = jsonDecode(response.body);
-      if (json case {
-        'data': List<dynamic> data,
-        'paging': {'next': String? nextUrl},
-      }) {
-        url = nextUrl;
-        // TODO: Implement custom Anime class
-        animeList.addAll(List<Anime>.from(data.map((x) => Anime.fromJson(x))));
-      } else {
-        url = null;
-        animeList.addAll(
-          List<Anime>.from(json['data'].map((x) => Anime.fromJson(x))),
-        );
-      }
+      final animeResultPage = MalPage<MalUserAnime>.fromJson(json);
+      url = animeResultPage.paging.next;
+      animeList.addAll(animeResultPage.data);
     } while (url != null && url.isNotEmpty);
 
     return animeList;
@@ -76,12 +67,12 @@ class MalService {
 
   MalService(this._repository);
 
-  Future<List<Anime>> getUserAnime({
+  Future<List<MalUserAnime>> getUserAnime({
     required String userName,
     required String status,
     required String accessToken,
   }) async {
-    return _repository.getUserAnime(
+    return await _repository.getUserAnime(
       userName: userName,
       status: status,
       accessToken: accessToken,
@@ -89,6 +80,6 @@ class MalService {
   }
 
   Future<String> fetchUsername(String accessToken) async {
-    return _repository.fetchUsername(accessToken);
+    return await _repository.fetchUsername(accessToken);
   }
 }
