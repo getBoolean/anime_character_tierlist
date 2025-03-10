@@ -383,7 +383,7 @@ class MalAnimeMapper extends ClassMapperBase<MalAnime> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = MalAnimeMapper._());
       MalUserAnimeMapper.ensureInitialized();
-      MalEntryMapper.ensureInitialized();
+      MalEntryNodeMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -391,8 +391,8 @@ class MalAnimeMapper extends ClassMapperBase<MalAnime> {
   @override
   final String id = 'MalAnime';
 
-  static MalEntry _$node(MalAnime v) => v.node;
-  static const Field<MalAnime, MalEntry> _f$node = Field('node', _$node);
+  static MalEntryNode _$node(MalAnime v) => v.node;
+  static const Field<MalAnime, MalEntryNode> _f$node = Field('node', _$node);
 
   @override
   final MappableFields<MalAnime> fields = const {
@@ -452,8 +452,8 @@ extension MalAnimeValueCopy<$R, $Out> on ObjectCopyWith<$R, MalAnime, $Out> {
 
 abstract class MalAnimeCopyWith<$R, $In extends MalAnime, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  MalEntryCopyWith<$R, MalEntry, MalEntry> get node;
-  $R call({MalEntry? node});
+  MalEntryNodeCopyWith<$R, MalEntryNode, MalEntryNode> get node;
+  $R call({MalEntryNode? node});
   MalAnimeCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -466,10 +466,10 @@ class _MalAnimeCopyWithImpl<$R, $Out>
   late final ClassMapperBase<MalAnime> $mapper =
       MalAnimeMapper.ensureInitialized();
   @override
-  MalEntryCopyWith<$R, MalEntry, MalEntry> get node =>
+  MalEntryNodeCopyWith<$R, MalEntryNode, MalEntryNode> get node =>
       $value.node.copyWith.$chain((v) => call(node: v));
   @override
-  $R call({MalEntry? node}) =>
+  $R call({MalEntryNode? node}) =>
       $apply(FieldCopyWithData({if (node != null) #node: node}));
   @override
   MalAnime $make(CopyWithData data) =>
@@ -481,13 +481,13 @@ class _MalAnimeCopyWithImpl<$R, $Out>
       _MalAnimeCopyWithImpl($value, $cast, t);
 }
 
-class MalEntryMapper extends ClassMapperBase<MalEntry> {
-  MalEntryMapper._();
+class MalEntryNodeMapper extends ClassMapperBase<MalEntryNode> {
+  MalEntryNodeMapper._();
 
-  static MalEntryMapper? _instance;
-  static MalEntryMapper ensureInitialized() {
+  static MalEntryNodeMapper? _instance;
+  static MalEntryNodeMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = MalEntryMapper._());
+      MapperContainer.globals.use(_instance = MalEntryNodeMapper._());
       MalEntryDetailsMapper.ensureInitialized();
       MalPictureMapper.ensureInitialized();
     }
@@ -495,25 +495,25 @@ class MalEntryMapper extends ClassMapperBase<MalEntry> {
   }
 
   @override
-  final String id = 'MalEntry';
+  final String id = 'MalEntryNode';
 
-  static int _$id(MalEntry v) => v.id;
-  static const Field<MalEntry, int> _f$id = Field('id', _$id);
-  static String _$title(MalEntry v) => v.title;
-  static const Field<MalEntry, String> _f$title = Field('title', _$title);
-  static MalPicture _$mainPicture(MalEntry v) => v.mainPicture;
-  static const Field<MalEntry, MalPicture> _f$mainPicture =
+  static int _$id(MalEntryNode v) => v.id;
+  static const Field<MalEntryNode, int> _f$id = Field('id', _$id);
+  static String _$title(MalEntryNode v) => v.title;
+  static const Field<MalEntryNode, String> _f$title = Field('title', _$title);
+  static MalPicture _$mainPicture(MalEntryNode v) => v.mainPicture;
+  static const Field<MalEntryNode, MalPicture> _f$mainPicture =
       Field('mainPicture', _$mainPicture, key: r'main_picture');
 
   @override
-  final MappableFields<MalEntry> fields = const {
+  final MappableFields<MalEntryNode> fields = const {
     #id: _f$id,
     #title: _f$title,
     #mainPicture: _f$mainPicture,
   };
 
-  static MalEntry _instantiate(DecodingData data) {
-    return MalEntry(
+  static MalEntryNode _instantiate(DecodingData data) {
+    return MalEntryNode(
         id: data.dec(_f$id),
         title: data.dec(_f$title),
         mainPicture: data.dec(_f$mainPicture));
@@ -522,65 +522,68 @@ class MalEntryMapper extends ClassMapperBase<MalEntry> {
   @override
   final Function instantiate = _instantiate;
 
-  static MalEntry fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<MalEntry>(map);
+  static MalEntryNode fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<MalEntryNode>(map);
   }
 
-  static MalEntry fromJson(String json) {
-    return ensureInitialized().decodeJson<MalEntry>(json);
+  static MalEntryNode fromJson(String json) {
+    return ensureInitialized().decodeJson<MalEntryNode>(json);
   }
 }
 
-mixin MalEntryMappable {
+mixin MalEntryNodeMappable {
   String toJson() {
-    return MalEntryMapper.ensureInitialized()
-        .encodeJson<MalEntry>(this as MalEntry);
+    return MalEntryNodeMapper.ensureInitialized()
+        .encodeJson<MalEntryNode>(this as MalEntryNode);
   }
 
   Map<String, dynamic> toMap() {
-    return MalEntryMapper.ensureInitialized()
-        .encodeMap<MalEntry>(this as MalEntry);
+    return MalEntryNodeMapper.ensureInitialized()
+        .encodeMap<MalEntryNode>(this as MalEntryNode);
   }
 
-  MalEntryCopyWith<MalEntry, MalEntry, MalEntry> get copyWith =>
-      _MalEntryCopyWithImpl(this as MalEntry, $identity, $identity);
+  MalEntryNodeCopyWith<MalEntryNode, MalEntryNode, MalEntryNode> get copyWith =>
+      _MalEntryNodeCopyWithImpl(this as MalEntryNode, $identity, $identity);
   @override
   String toString() {
-    return MalEntryMapper.ensureInitialized().stringifyValue(this as MalEntry);
+    return MalEntryNodeMapper.ensureInitialized()
+        .stringifyValue(this as MalEntryNode);
   }
 
   @override
   bool operator ==(Object other) {
-    return MalEntryMapper.ensureInitialized()
-        .equalsValue(this as MalEntry, other);
+    return MalEntryNodeMapper.ensureInitialized()
+        .equalsValue(this as MalEntryNode, other);
   }
 
   @override
   int get hashCode {
-    return MalEntryMapper.ensureInitialized().hashValue(this as MalEntry);
+    return MalEntryNodeMapper.ensureInitialized()
+        .hashValue(this as MalEntryNode);
   }
 }
 
-extension MalEntryValueCopy<$R, $Out> on ObjectCopyWith<$R, MalEntry, $Out> {
-  MalEntryCopyWith<$R, MalEntry, $Out> get $asMalEntry =>
-      $base.as((v, t, t2) => _MalEntryCopyWithImpl(v, t, t2));
+extension MalEntryNodeValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, MalEntryNode, $Out> {
+  MalEntryNodeCopyWith<$R, MalEntryNode, $Out> get $asMalEntryNode =>
+      $base.as((v, t, t2) => _MalEntryNodeCopyWithImpl(v, t, t2));
 }
 
-abstract class MalEntryCopyWith<$R, $In extends MalEntry, $Out>
+abstract class MalEntryNodeCopyWith<$R, $In extends MalEntryNode, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   MalPictureCopyWith<$R, MalPicture, MalPicture> get mainPicture;
   $R call({int? id, String? title, MalPicture? mainPicture});
-  MalEntryCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
+  MalEntryNodeCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
-class _MalEntryCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, MalEntry, $Out>
-    implements MalEntryCopyWith<$R, MalEntry, $Out> {
-  _MalEntryCopyWithImpl(super.value, super.then, super.then2);
+class _MalEntryNodeCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, MalEntryNode, $Out>
+    implements MalEntryNodeCopyWith<$R, MalEntryNode, $Out> {
+  _MalEntryNodeCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<MalEntry> $mapper =
-      MalEntryMapper.ensureInitialized();
+  late final ClassMapperBase<MalEntryNode> $mapper =
+      MalEntryNodeMapper.ensureInitialized();
   @override
   MalPictureCopyWith<$R, MalPicture, MalPicture> get mainPicture =>
       $value.mainPicture.copyWith.$chain((v) => call(mainPicture: v));
@@ -592,15 +595,15 @@ class _MalEntryCopyWithImpl<$R, $Out>
         if (mainPicture != null) #mainPicture: mainPicture
       }));
   @override
-  MalEntry $make(CopyWithData data) => MalEntry(
+  MalEntryNode $make(CopyWithData data) => MalEntryNode(
       id: data.get(#id, or: $value.id),
       title: data.get(#title, or: $value.title),
       mainPicture: data.get(#mainPicture, or: $value.mainPicture));
 
   @override
-  MalEntryCopyWith<$R2, MalEntry, $Out2> $chain<$R2, $Out2>(
+  MalEntryNodeCopyWith<$R2, MalEntryNode, $Out2> $chain<$R2, $Out2>(
           Then<$Out2, $R2> t) =>
-      _MalEntryCopyWithImpl($value, $cast, t);
+      _MalEntryNodeCopyWithImpl($value, $cast, t);
 }
 
 class MalPictureMapper extends ClassMapperBase<MalPicture> {
@@ -827,7 +830,7 @@ class MalUserAnimeMapper extends ClassMapperBase<MalUserAnime> {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = MalUserAnimeMapper._());
       MalAnimeMapper.ensureInitialized();
-      MalEntryMapper.ensureInitialized();
+      MalEntryNodeMapper.ensureInitialized();
       MalListStatusMapper.ensureInitialized();
     }
     return _instance!;
@@ -836,8 +839,9 @@ class MalUserAnimeMapper extends ClassMapperBase<MalUserAnime> {
   @override
   final String id = 'MalUserAnime';
 
-  static MalEntry _$node(MalUserAnime v) => v.node;
-  static const Field<MalUserAnime, MalEntry> _f$node = Field('node', _$node);
+  static MalEntryNode _$node(MalUserAnime v) => v.node;
+  static const Field<MalUserAnime, MalEntryNode> _f$node =
+      Field('node', _$node);
   static MalListStatus _$listStatus(MalUserAnime v) => v.listStatus;
   static const Field<MalUserAnime, MalListStatus> _f$listStatus =
       Field('listStatus', _$listStatus, key: r'list_status');
@@ -906,10 +910,10 @@ extension MalUserAnimeValueCopy<$R, $Out>
 abstract class MalUserAnimeCopyWith<$R, $In extends MalUserAnime, $Out>
     implements MalAnimeCopyWith<$R, $In, $Out> {
   @override
-  MalEntryCopyWith<$R, MalEntry, MalEntry> get node;
+  MalEntryNodeCopyWith<$R, MalEntryNode, MalEntryNode> get node;
   MalListStatusCopyWith<$R, MalListStatus, MalListStatus> get listStatus;
   @override
-  $R call({MalEntry? node, MalListStatus? listStatus});
+  $R call({MalEntryNode? node, MalListStatus? listStatus});
   MalUserAnimeCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
@@ -922,13 +926,13 @@ class _MalUserAnimeCopyWithImpl<$R, $Out>
   late final ClassMapperBase<MalUserAnime> $mapper =
       MalUserAnimeMapper.ensureInitialized();
   @override
-  MalEntryCopyWith<$R, MalEntry, MalEntry> get node =>
+  MalEntryNodeCopyWith<$R, MalEntryNode, MalEntryNode> get node =>
       $value.node.copyWith.$chain((v) => call(node: v));
   @override
   MalListStatusCopyWith<$R, MalListStatus, MalListStatus> get listStatus =>
       $value.listStatus.copyWith.$chain((v) => call(listStatus: v));
   @override
-  $R call({MalEntry? node, MalListStatus? listStatus}) =>
+  $R call({MalEntryNode? node, MalListStatus? listStatus}) =>
       $apply(FieldCopyWithData({
         if (node != null) #node: node,
         if (listStatus != null) #listStatus: listStatus
@@ -1074,7 +1078,7 @@ class MalEntryDetailsMapper extends ClassMapperBase<MalEntryDetails> {
   static MalEntryDetailsMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = MalEntryDetailsMapper._());
-      MalEntryMapper.ensureInitialized();
+      MalEntryNodeMapper.ensureInitialized();
       MalAnimeDetailsMapper.ensureInitialized();
       MalMangaDetailsMapper.ensureInitialized();
       MalPictureMapper.ensureInitialized();
@@ -1228,7 +1232,7 @@ mixin MalEntryDetailsMappable {
 }
 
 abstract class MalEntryDetailsCopyWith<$R, $In extends MalEntryDetails, $Out>
-    implements MalEntryCopyWith<$R, $In, $Out> {
+    implements MalEntryNodeCopyWith<$R, $In, $Out> {
   @override
   MalPictureCopyWith<$R, MalPicture, MalPicture> get mainPicture;
   MalAlternativeTitlesCopyWith<$R, MalAlternativeTitles, MalAlternativeTitles>
@@ -1527,7 +1531,7 @@ class MalAnimeRelatedMapper extends ClassMapperBase<MalAnimeRelated> {
   static MalAnimeRelatedMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = MalAnimeRelatedMapper._());
-      MalEntryMapper.ensureInitialized();
+      MalEntryNodeMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -1543,8 +1547,9 @@ class MalAnimeRelatedMapper extends ClassMapperBase<MalAnimeRelated> {
   static const Field<MalAnimeRelated, String> _f$relationTypeFormatted = Field(
       'relationTypeFormatted', _$relationTypeFormatted,
       key: r'relation_type_formatted');
-  static MalEntry _$node(MalAnimeRelated v) => v.node;
-  static const Field<MalAnimeRelated, MalEntry> _f$node = Field('node', _$node);
+  static MalEntryNode _$node(MalAnimeRelated v) => v.node;
+  static const Field<MalAnimeRelated, MalEntryNode> _f$node =
+      Field('node', _$node);
 
   @override
   final MappableFields<MalAnimeRelated> fields = const {
@@ -1613,9 +1618,11 @@ extension MalAnimeRelatedValueCopy<$R, $Out>
 
 abstract class MalAnimeRelatedCopyWith<$R, $In extends MalAnimeRelated, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  MalEntryCopyWith<$R, MalEntry, MalEntry> get node;
+  MalEntryNodeCopyWith<$R, MalEntryNode, MalEntryNode> get node;
   $R call(
-      {String? relationType, String? relationTypeFormatted, MalEntry? node});
+      {String? relationType,
+      String? relationTypeFormatted,
+      MalEntryNode? node});
   MalAnimeRelatedCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
@@ -1629,13 +1636,13 @@ class _MalAnimeRelatedCopyWithImpl<$R, $Out>
   late final ClassMapperBase<MalAnimeRelated> $mapper =
       MalAnimeRelatedMapper.ensureInitialized();
   @override
-  MalEntryCopyWith<$R, MalEntry, MalEntry> get node =>
+  MalEntryNodeCopyWith<$R, MalEntryNode, MalEntryNode> get node =>
       $value.node.copyWith.$chain((v) => call(node: v));
   @override
   $R call(
           {String? relationType,
           String? relationTypeFormatted,
-          MalEntry? node}) =>
+          MalEntryNode? node}) =>
       $apply(FieldCopyWithData({
         if (relationType != null) #relationType: relationType,
         if (relationTypeFormatted != null)
@@ -1789,7 +1796,7 @@ class MalAnimeRecommendationMapper
   static MalAnimeRecommendationMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = MalAnimeRecommendationMapper._());
-      MalEntryMapper.ensureInitialized();
+      MalEntryNodeMapper.ensureInitialized();
     }
     return _instance!;
   }
@@ -1797,8 +1804,8 @@ class MalAnimeRecommendationMapper
   @override
   final String id = 'MalAnimeRecommendation';
 
-  static MalEntry _$node(MalAnimeRecommendation v) => v.node;
-  static const Field<MalAnimeRecommendation, MalEntry> _f$node =
+  static MalEntryNode _$node(MalAnimeRecommendation v) => v.node;
+  static const Field<MalAnimeRecommendation, MalEntryNode> _f$node =
       Field('node', _$node);
   static int _$numRecommendations(MalAnimeRecommendation v) =>
       v.numRecommendations;
@@ -1875,8 +1882,8 @@ abstract class MalAnimeRecommendationCopyWith<
     $R,
     $In extends MalAnimeRecommendation,
     $Out> implements ClassCopyWith<$R, $In, $Out> {
-  MalEntryCopyWith<$R, MalEntry, MalEntry> get node;
-  $R call({MalEntry? node, int? numRecommendations});
+  MalEntryNodeCopyWith<$R, MalEntryNode, MalEntryNode> get node;
+  $R call({MalEntryNode? node, int? numRecommendations});
   MalAnimeRecommendationCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
@@ -1891,10 +1898,10 @@ class _MalAnimeRecommendationCopyWithImpl<$R, $Out>
   late final ClassMapperBase<MalAnimeRecommendation> $mapper =
       MalAnimeRecommendationMapper.ensureInitialized();
   @override
-  MalEntryCopyWith<$R, MalEntry, MalEntry> get node =>
+  MalEntryNodeCopyWith<$R, MalEntryNode, MalEntryNode> get node =>
       $value.node.copyWith.$chain((v) => call(node: v));
   @override
-  $R call({MalEntry? node, int? numRecommendations}) =>
+  $R call({MalEntryNode? node, int? numRecommendations}) =>
       $apply(FieldCopyWithData({
         if (node != null) #node: node,
         if (numRecommendations != null) #numRecommendations: numRecommendations
@@ -3753,7 +3760,7 @@ class MalEntryRankingMapper extends ClassMapperBase<MalEntryRanking> {
   static MalEntryRankingMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = MalEntryRankingMapper._());
-      MalEntryMapper.ensureInitialized();
+      MalEntryNodeMapper.ensureInitialized();
       MalEntryRankingItemMapper.ensureInitialized();
     }
     return _instance!;
@@ -3762,8 +3769,9 @@ class MalEntryRankingMapper extends ClassMapperBase<MalEntryRanking> {
   @override
   final String id = 'MalEntryRanking';
 
-  static MalEntry _$node(MalEntryRanking v) => v.node;
-  static const Field<MalEntryRanking, MalEntry> _f$node = Field('node', _$node);
+  static MalEntryNode _$node(MalEntryRanking v) => v.node;
+  static const Field<MalEntryRanking, MalEntryNode> _f$node =
+      Field('node', _$node);
   static MalEntryRankingItem _$rank(MalEntryRanking v) => v.rank;
   static const Field<MalEntryRanking, MalEntryRankingItem> _f$rank =
       Field('rank', _$rank);
@@ -3831,10 +3839,10 @@ extension MalEntryRankingValueCopy<$R, $Out>
 
 abstract class MalEntryRankingCopyWith<$R, $In extends MalEntryRanking, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  MalEntryCopyWith<$R, MalEntry, MalEntry> get node;
+  MalEntryNodeCopyWith<$R, MalEntryNode, MalEntryNode> get node;
   MalEntryRankingItemCopyWith<$R, MalEntryRankingItem, MalEntryRankingItem>
       get rank;
-  $R call({MalEntry? node, MalEntryRankingItem? rank});
+  $R call({MalEntryNode? node, MalEntryRankingItem? rank});
   MalEntryRankingCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
       Then<$Out2, $R2> t);
 }
@@ -3848,13 +3856,13 @@ class _MalEntryRankingCopyWithImpl<$R, $Out>
   late final ClassMapperBase<MalEntryRanking> $mapper =
       MalEntryRankingMapper.ensureInitialized();
   @override
-  MalEntryCopyWith<$R, MalEntry, MalEntry> get node =>
+  MalEntryNodeCopyWith<$R, MalEntryNode, MalEntryNode> get node =>
       $value.node.copyWith.$chain((v) => call(node: v));
   @override
   MalEntryRankingItemCopyWith<$R, MalEntryRankingItem, MalEntryRankingItem>
       get rank => $value.rank.copyWith.$chain((v) => call(rank: v));
   @override
-  $R call({MalEntry? node, MalEntryRankingItem? rank}) =>
+  $R call({MalEntryNode? node, MalEntryRankingItem? rank}) =>
       $apply(FieldCopyWithData(
           {if (node != null) #node: node, if (rank != null) #rank: rank}));
   @override

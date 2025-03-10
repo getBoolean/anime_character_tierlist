@@ -44,7 +44,7 @@ class MalPaging with MalPagingMappable {
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class MalAnime with MalAnimeMappable {
-  final MalEntry node;
+  final MalEntryNode node;
 
   const MalAnime({required this.node});
 
@@ -66,24 +66,26 @@ class MalUserAnime extends MalAnime with MalUserAnimeMappable {
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
-class MalEntry with MalEntryMappable {
+class MalEntryNode with MalEntryNodeMappable {
   final int id;
   final String title;
   final MalPicture mainPicture;
 
-  const MalEntry({
+  const MalEntryNode({
     required this.id,
     required this.title,
     required this.mainPicture,
   });
 
-  factory MalEntry.fromJson(String json) => MalEntryMapper.fromJson(json);
-  factory MalEntry.fromMap(Map<String, dynamic> map) =>
-      MalEntryMapper.fromMap(map);
+  factory MalEntryNode.fromJson(String json) =>
+      MalEntryNodeMapper.fromJson(json);
+  factory MalEntryNode.fromMap(Map<String, dynamic> map) =>
+      MalEntryNodeMapper.fromMap(map);
 }
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
-abstract class MalEntryDetails extends MalEntry with MalEntryDetailsMappable {
+abstract class MalEntryDetails extends MalEntryNode
+    with MalEntryDetailsMappable {
   final MalAlternativeTitles alternativeTitles;
   final DateTime startDate;
   final DateTime endDate;
@@ -319,7 +321,7 @@ class MalAnimeBroadcast with MalAnimeBroadcastMappable {
 class MalAnimeRelated with MalAnimeRelatedMappable {
   final String relationType;
   final String relationTypeFormatted;
-  final MalEntry node;
+  final MalEntryNode node;
 
   const MalAnimeRelated({
     required this.relationType,
@@ -355,7 +357,7 @@ class MalMangaDetailsRelated with MalMangaDetailsRelatedMappable {
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class MalAnimeRecommendation with MalAnimeRecommendationMappable {
-  final MalEntry node;
+  final MalEntryNode node;
   final int numRecommendations;
 
   const MalAnimeRecommendation({
@@ -371,7 +373,7 @@ class MalAnimeRecommendation with MalAnimeRecommendationMappable {
 
 @MappableClass(caseStyle: CaseStyle.snakeCase)
 class MalEntryRanking with MalEntryRankingMappable {
-  final MalEntry node;
+  final MalEntryNode node;
   final MalEntryRankingItem rank;
 
   const MalEntryRanking({required this.node, required this.rank});
