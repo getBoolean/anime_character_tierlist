@@ -4,6 +4,7 @@ import 'dart:io' as io;
 import 'dart:math' as math;
 
 import 'package:anime_character_tierlist/src/exceptions/mal_exception.dart';
+import 'package:anime_character_tierlist/src/features/auth.dart';
 import 'package:anime_character_tierlist/src/features/mal_api/mal_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -153,27 +154,51 @@ class MalRepository {
 }
 
 final malServiceProvider = Provider<MalService>((ref) {
-  return MalService(ref.watch(malRepositoryProvider));
+  final authState = ref.watch(authNotifierProvider);
+  return MalService(
+    ref.watch(malRepositoryProvider),
+    authState.unwrapPrevious().valueOrNull,
+  );
 });
 
 class MalService {
   final MalRepository _repository;
+  final AuthNotifierState? _authState;
 
-  MalService(this._repository);
+  MalService(this._repository, this._authState);
 
-  Future<List<MalUserAnime>> getUserAnime({
-    required String userName,
-    required String status,
-    required String accessToken,
+  Future<Iterable<MalUserAnime>> getUserAnime({
+    required Iterable<String> statuses,
   }) async {
-    return await _repository.getUserAnime(
-      userName: userName,
-      status: status,
-      accessToken: accessToken,
-    );
+    final username = _authState?.username;
+    final credential = _authState?.credential;
+    if (_authState == null || username == null || credential == null) {
+      throw StateError("User not authenticated");
+    }
+    final List<MalUserAnime> anime = <MalUserAnime>[];
+    for (final status in statuses) {
+      anime.addAll(
+        await _repository.getUserAnime(
+          userName: username,
+          status: status,
+          accessToken: credential.accessToken,
+        ),
+      );
+    }
+    return anime;
   }
 
   Future<String> fetchUsername(String accessToken) async {
     return await _repository.fetchUsername(accessToken);
+  }
+
+  Future<Iterable<j.CharacterMeta>> fetchCharacters(
+    Iterable<MalUserAnime> animes,
+  ) async {
+    final Set<j.CharacterMeta> characters = <j.CharacterMeta>{};
+    for (final anime in animes) {
+      characters.addAll(await _repository.fetchAnimeCharacters(anime.node.id));
+    }
+    return characters;
   }
 }
