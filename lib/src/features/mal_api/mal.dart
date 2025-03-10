@@ -5,14 +5,14 @@ import 'package:anime_character_tierlist/src/features/mal_api/mal_models.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:jikan_api/jikan_api.dart';
+import 'package:jikan_api/jikan_api.dart' as j;
 
 final malRepositoryProvider = Provider<MalRepository>((ref) {
   return MalRepository();
 });
 
 class MalRepository {
-  final Jikan jikan = Jikan();
+  final j.Jikan jikan = j.Jikan();
 
   Future<List<MalUserAnime>> getUserAnime({
     required String userName,
@@ -55,6 +55,14 @@ class MalRepository {
       if (kDebugMode) print('Failed to get username: ${response.body}');
       throw MalException('Failed to get username', response);
     }
+  }
+
+  Future<j.BuiltList<j.CharacterMeta>> fetchAnimeCharacters(int animeId) async {
+    return await jikan.getAnimeCharacters(animeId);
+  }
+
+  Future<j.BuiltList<j.Picture>> fetchCharacterPictures(int characterId) async {
+    return await jikan.getCharacterPictures(characterId);
   }
 }
 
