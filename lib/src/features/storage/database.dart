@@ -146,6 +146,10 @@ class AnimeDatabase extends _$AnimeDatabase {
     return groupedResults.entries
         .map((entry) => TierData(rank: entry.key, characters: entry.value))
         .toList()
+      ..forEach(
+        (tier) =>
+            tier.characters.sort((a, b) => a.sortOrder.compareTo(b.sortOrder)),
+      )
       ..sort((a, b) => a.rank.compareTo(b.rank));
   }
 
