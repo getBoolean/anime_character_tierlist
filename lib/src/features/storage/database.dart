@@ -82,7 +82,7 @@ class AnimeDatabase extends _$AnimeDatabase {
   ) async {
     await transaction(() async {
       // Insert character first
-      await into(characters).insert(
+      await into(characters).insertOnConflictUpdate(
         CharactersCompanion(
           id: Value(character.id),
           animeId: Value(character.animeId),
@@ -93,7 +93,7 @@ class AnimeDatabase extends _$AnimeDatabase {
 
       // Insert pictures
       for (final pictureUri in pictures) {
-        await into(characterPictures).insert(
+        await into(characterPictures).insertOnConflictUpdate(
           CharacterPicturesCompanion(
             characterId: Value(character.id),
             pictureUri: Value(pictureUri.toString()),

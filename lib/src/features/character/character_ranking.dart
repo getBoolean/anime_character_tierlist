@@ -264,3 +264,83 @@ class _NewCharacterDialogState extends ConsumerState<NewCharacterDialog> {
     );
   }
 }
+
+class EditRankingDialog extends ConsumerStatefulWidget {
+  const EditRankingDialog({
+    super.key,
+    required this.character,
+    required this.currentRank,
+  });
+
+  final CharacterData character;
+  final int currentRank;
+
+  @override
+  ConsumerState<EditRankingDialog> createState() => _EditRankingDialogState();
+}
+
+class _EditRankingDialogState extends ConsumerState<EditRankingDialog> {
+  late final TextEditingController _rankingNumber;
+
+  @override
+  void initState() {
+    super.initState();
+    _rankingNumber = TextEditingController(text: widget.currentRank.toString());
+  }
+
+  @override
+  void dispose() {
+    _rankingNumber.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog.adaptive(
+      title: Text('Edit Ranking'),
+      content: Form(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _rankingNumber,
+              decoration: InputDecoration(labelText: 'Ranking #'),
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a ranking #';
+                }
+                if (int.tryParse(value) == null) {
+                  return 'Please enter a valid number';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            final newRank = int.tryParse(_rankingNumber.text);
+            if (newRank != null) {
+              await ref
+                  .read(storeProvider)
+                  .future
+                  .rankCharacter(character: widget.character, rank: newRank);
+
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
+            }
+          },
+          child: Text('Update Ranking'),
+        ),
+      ],
+    );
+  }
+}

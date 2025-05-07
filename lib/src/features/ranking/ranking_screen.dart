@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:anime_character_tierlist/src/features/storage/store.dart';
+import 'package:anime_character_tierlist/src/features/character/character_ranking.dart';
 
 class RankingScreen extends ConsumerWidget {
   const RankingScreen({super.key});
@@ -42,7 +43,7 @@ class RankingScreen extends ConsumerWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Text(
-                          'Tier ${item.tier.rank}',
+                          'Rank ${item.tier.rank}',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ),
@@ -64,7 +65,25 @@ class RankingScreen extends ConsumerWidget {
                             : null,
                     title: Text(item.character.name),
                     subtitle: Text(item.character.animeName),
-                    trailing: const Icon(Icons.drag_handle),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder:
+                                  (context) => EditRankingDialog(
+                                    character: item.character,
+                                    currentRank: item.tier.rank,
+                                  ),
+                            );
+                          },
+                        ),
+                        Icon(Icons.drag_handle),
+                      ],
+                    ),
                   ),
                 ),
               ],
