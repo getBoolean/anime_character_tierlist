@@ -1,6 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:dart_mappable/dart_mappable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:collection/collection.dart';
 
 part 'store.mapper.dart';
 
@@ -12,21 +13,61 @@ class Store {
 
   Future<void> addTier({
     required String name,
-    List<int> characterIds = const [],
+    List<Character> characters = const [],
   }) async {
-    final tier = Tier(name: name, characterIds: characterIds);
-
-    // Get existing tiers or empty list if none exist
+    final tier = Tier(name: name, characters: characters);
     final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
     TierMapper.ensureInitialized();
     final List<Tier> tiers = MapperContainer.globals.fromJson(
       existingTiersJson,
     );
 
-    // Add new tier
     tiers.add(tier);
+    await _prefs.setString(_tiersKey, MapperContainer.globals.toJson(tiers));
+  }
 
-    // Save updated tiers list
+  Future<void> addCharacterToTier({
+    required String tierName,
+    required Character character,
+  }) async {
+    final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
+    TierMapper.ensureInitialized();
+    final List<Tier> tiers = MapperContainer.globals.fromJson(
+      existingTiersJson,
+    );
+
+    final tierIndex = tiers.indexWhere((t) => t.name == tierName);
+    if (tierIndex == -1) {
+      throw Exception('Tier not found: $tierName');
+    }
+
+    final oldTier = tiers[tierIndex];
+    if (!oldTier.characters.any((c) => c.id == character.id)) {
+      final newTier = Tier(
+        name: oldTier.name,
+        characters: [...oldTier.characters, character],
+      );
+      tiers[tierIndex] = newTier;
+      await _prefs.setString(_tiersKey, MapperContainer.globals.toJson(tiers));
+    }
+  }
+
+  Future<void> updateCharactersInTier({
+    required String tierName,
+    required List<Character> characters,
+  }) async {
+    final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
+    TierMapper.ensureInitialized();
+    final List<Tier> tiers = MapperContainer.globals.fromJson(
+      existingTiersJson,
+    );
+
+    final tierIndex = tiers.indexWhere((t) => t.name == tierName);
+    if (tierIndex == -1) {
+      throw Exception('Tier not found: $tierName');
+    }
+
+    tiers[tierIndex] = Tier(name: tierName, characters: characters);
     await _prefs.setString(_tiersKey, MapperContainer.globals.toJson(tiers));
   }
 
@@ -49,10 +90,40 @@ final storeProvider = FutureProvider<Store>((ref) async {
 @MappableClass()
 class Tier with TierMappable {
   final String name;
-  final List<int> characterIds;
+  final List<Character> characters;
 
-  const Tier({required this.name, required this.characterIds});
+  const Tier({required this.name, required this.characters});
 
   static const fromMap = TierMapper.fromMap;
   static const fromJson = TierMapper.fromJson;
+}
+
+class UriMapper extends SimpleMapper<Uri> {
+  const UriMapper();
+
+  @override
+  Uri decode(dynamic value) {
+    return Uri.parse(value as String);
+  }
+
+  @override
+  dynamic encode(Uri self) {
+    return self.toString();
+  }
+}
+
+@MappableClass(includeCustomMappers: [UriMapper()])
+class Character with CharacterMappable {
+  final int id;
+  final String name;
+  final List<Uri> pictures;
+
+  const Character({
+    required this.id,
+    required this.name,
+    required this.pictures,
+  });
+
+  static const fromMap = CharacterMapper.fromMap;
+  static const fromJson = CharacterMapper.fromJson;
 }
