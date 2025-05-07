@@ -71,6 +71,12 @@ class Store {
     await _prefs.setString(_tiersKey, MapperContainer.globals.toJson(tiers));
   }
 
+  List<Tier> getTiers() {
+    final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
+    TierMapper.ensureInitialized();
+    return MapperContainer.globals.fromJson(existingTiersJson);
+  }
+
   // TODO: save ranking process to disk
 
   // rank character a > character b
