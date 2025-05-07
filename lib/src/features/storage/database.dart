@@ -112,34 +112,46 @@ class AnimeDatabase extends _$AnimeDatabase {
     );
   }
 
-  Future<List<TierData>> getTiers() async {
-    final query = select(rankedCharacters).join([
+  Future<CharacterData> _buildCharacterData(
+    Character characterRow,
+    RankedCharacter rankedCharacterRow,
+  ) async {
+    final pictures =
+        await (select(characterPictures)
+          ..where((p) => p.characterId.equals(characterRow.id))).get();
+
+    return CharacterData(
+      id: characterRow.id,
+      animeId: characterRow.animeId,
+      animeName: characterRow.animeName,
+      name: characterRow.name,
+      pictures: pictures.map((p) => Uri.parse(p.pictureUri)).toList(),
+      sortOrder: rankedCharacterRow.sortOrder,
+    );
+  }
+
+  JoinedSelectStatement<HasResultSet, dynamic> _createTiersQuery() {
+    return select(rankedCharacters).join([
       innerJoin(
         characters,
         characters.id.equalsExp(rankedCharacters.characterId),
       ),
     ]);
+  }
 
-    final results = await query.get();
-
-    // Group results by rank
+  Future<List<TierData>> _processTierResults(List<TypedResult> results) async {
     final groupedResults = <int, List<CharacterData>>{};
+
     for (final row in results) {
       final characterRow = row.readTable(characters);
-      final pictures =
-          await (select(characterPictures)
-            ..where((p) => p.characterId.equals(characterRow.id))).get();
-
       final rankedCharacterRow = row.readTable(rankedCharacters);
-      final character = CharacterData(
-        id: characterRow.id,
-        animeId: characterRow.animeId,
-        animeName: characterRow.animeName,
-        name: characterRow.name,
-        pictures: pictures.map((p) => Uri.parse(p.pictureUri)).toList(),
-        sortOrder: rankedCharacterRow.sortOrder,
+
+      final character = await _buildCharacterData(
+        characterRow,
+        rankedCharacterRow,
       );
       final rank = rankedCharacterRow.rank;
+
       groupedResults.putIfAbsent(rank, () => []).add(character);
     }
 
@@ -151,6 +163,15 @@ class AnimeDatabase extends _$AnimeDatabase {
             tier.characters.sort((a, b) => a.sortOrder.compareTo(b.sortOrder)),
       )
       ..sort((a, b) => a.rank.compareTo(b.rank));
+  }
+
+  Future<List<TierData>> getTiers() async {
+    final results = await _createTiersQuery().get();
+    return _processTierResults(results);
+  }
+
+  Stream<List<TierData>> getTiersStream() {
+    return _createTiersQuery().watch().asyncMap(_processTierResults);
   }
 
   @override

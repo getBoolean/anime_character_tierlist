@@ -6,6 +6,15 @@ class Store {
 
   Store(this._db);
 
+  late final future = StoreFuture(_db);
+  late final stream = StoreStream(_db);
+}
+
+class StoreFuture {
+  final AnimeDatabase _db;
+
+  StoreFuture(this._db);
+
   Future<void> rankCharacter({
     required CharacterData character,
     required int rank,
@@ -16,6 +25,16 @@ class Store {
 
   Future<List<TierData>> getTiers() async {
     return _db.getTiers();
+  }
+}
+
+class StoreStream {
+  final AnimeDatabase _db;
+
+  StoreStream(this._db);
+
+  Stream<List<TierData>> getTiersStream() {
+    return _db.getTiersStream();
   }
 }
 
