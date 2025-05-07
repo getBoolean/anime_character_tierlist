@@ -593,8 +593,20 @@ class $RankedCharactersTable extends RankedCharacters
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
   @override
-  List<GeneratedColumn> get $columns => [characterId, rank];
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [characterId, rank, sortOrder];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -624,6 +636,12 @@ class $RankedCharactersTable extends RankedCharacters
     } else if (isInserting) {
       context.missing(_rankMeta);
     }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
     return context;
   }
 
@@ -643,6 +661,11 @@ class $RankedCharactersTable extends RankedCharacters
             DriftSqlType.int,
             data['${effectivePrefix}rank'],
           )!,
+      sortOrder:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}sort_order'],
+          )!,
     );
   }
 
@@ -655,12 +678,18 @@ class $RankedCharactersTable extends RankedCharacters
 class RankedCharacter extends DataClass implements Insertable<RankedCharacter> {
   final int characterId;
   final int rank;
-  const RankedCharacter({required this.characterId, required this.rank});
+  final int sortOrder;
+  const RankedCharacter({
+    required this.characterId,
+    required this.rank,
+    required this.sortOrder,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['character_id'] = Variable<int>(characterId);
     map['rank'] = Variable<int>(rank);
+    map['sort_order'] = Variable<int>(sortOrder);
     return map;
   }
 
@@ -668,6 +697,7 @@ class RankedCharacter extends DataClass implements Insertable<RankedCharacter> {
     return RankedCharactersCompanion(
       characterId: Value(characterId),
       rank: Value(rank),
+      sortOrder: Value(sortOrder),
     );
   }
 
@@ -679,6 +709,7 @@ class RankedCharacter extends DataClass implements Insertable<RankedCharacter> {
     return RankedCharacter(
       characterId: serializer.fromJson<int>(json['characterId']),
       rank: serializer.fromJson<int>(json['rank']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
     );
   }
   @override
@@ -687,18 +718,22 @@ class RankedCharacter extends DataClass implements Insertable<RankedCharacter> {
     return <String, dynamic>{
       'characterId': serializer.toJson<int>(characterId),
       'rank': serializer.toJson<int>(rank),
+      'sortOrder': serializer.toJson<int>(sortOrder),
     };
   }
 
-  RankedCharacter copyWith({int? characterId, int? rank}) => RankedCharacter(
-    characterId: characterId ?? this.characterId,
-    rank: rank ?? this.rank,
-  );
+  RankedCharacter copyWith({int? characterId, int? rank, int? sortOrder}) =>
+      RankedCharacter(
+        characterId: characterId ?? this.characterId,
+        rank: rank ?? this.rank,
+        sortOrder: sortOrder ?? this.sortOrder,
+      );
   RankedCharacter copyWithCompanion(RankedCharactersCompanion data) {
     return RankedCharacter(
       characterId:
           data.characterId.present ? data.characterId.value : this.characterId,
       rank: data.rank.present ? data.rank.value : this.rank,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
     );
   }
 
@@ -706,49 +741,58 @@ class RankedCharacter extends DataClass implements Insertable<RankedCharacter> {
   String toString() {
     return (StringBuffer('RankedCharacter(')
           ..write('characterId: $characterId, ')
-          ..write('rank: $rank')
+          ..write('rank: $rank, ')
+          ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(characterId, rank);
+  int get hashCode => Object.hash(characterId, rank, sortOrder);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is RankedCharacter &&
           other.characterId == this.characterId &&
-          other.rank == this.rank);
+          other.rank == this.rank &&
+          other.sortOrder == this.sortOrder);
 }
 
 class RankedCharactersCompanion extends UpdateCompanion<RankedCharacter> {
   final Value<int> characterId;
   final Value<int> rank;
+  final Value<int> sortOrder;
   const RankedCharactersCompanion({
     this.characterId = const Value.absent(),
     this.rank = const Value.absent(),
+    this.sortOrder = const Value.absent(),
   });
   RankedCharactersCompanion.insert({
     this.characterId = const Value.absent(),
     required int rank,
+    this.sortOrder = const Value.absent(),
   }) : rank = Value(rank);
   static Insertable<RankedCharacter> custom({
     Expression<int>? characterId,
     Expression<int>? rank,
+    Expression<int>? sortOrder,
   }) {
     return RawValuesInsertable({
       if (characterId != null) 'character_id': characterId,
       if (rank != null) 'rank': rank,
+      if (sortOrder != null) 'sort_order': sortOrder,
     });
   }
 
   RankedCharactersCompanion copyWith({
     Value<int>? characterId,
     Value<int>? rank,
+    Value<int>? sortOrder,
   }) {
     return RankedCharactersCompanion(
       characterId: characterId ?? this.characterId,
       rank: rank ?? this.rank,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
@@ -761,6 +805,9 @@ class RankedCharactersCompanion extends UpdateCompanion<RankedCharacter> {
     if (rank.present) {
       map['rank'] = Variable<int>(rank.value);
     }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
     return map;
   }
 
@@ -768,7 +815,8 @@ class RankedCharactersCompanion extends UpdateCompanion<RankedCharacter> {
   String toString() {
     return (StringBuffer('RankedCharactersCompanion(')
           ..write('characterId: $characterId, ')
-          ..write('rank: $rank')
+          ..write('rank: $rank, ')
+          ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
@@ -1496,11 +1544,13 @@ typedef $$RankedCharactersTableCreateCompanionBuilder =
     RankedCharactersCompanion Function({
       Value<int> characterId,
       required int rank,
+      Value<int> sortOrder,
     });
 typedef $$RankedCharactersTableUpdateCompanionBuilder =
     RankedCharactersCompanion Function({
       Value<int> characterId,
       Value<int> rank,
+      Value<int> sortOrder,
     });
 
 final class $$RankedCharactersTableReferences
@@ -1550,6 +1600,11 @@ class $$RankedCharactersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$CharactersTableFilterComposer get characterId {
     final $$CharactersTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -1588,6 +1643,11 @@ class $$RankedCharactersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CharactersTableOrderingComposer get characterId {
     final $$CharactersTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -1623,6 +1683,9 @@ class $$RankedCharactersTableAnnotationComposer
   });
   GeneratedColumn<int> get rank =>
       $composableBuilder(column: $table.rank, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 
   $$CharactersTableAnnotationComposer get characterId {
     final $$CharactersTableAnnotationComposer composer = $composerBuilder(
@@ -1687,17 +1750,21 @@ class $$RankedCharactersTableTableManager
               ({
                 Value<int> characterId = const Value.absent(),
                 Value<int> rank = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
               }) => RankedCharactersCompanion(
                 characterId: characterId,
                 rank: rank,
+                sortOrder: sortOrder,
               ),
           createCompanionCallback:
               ({
                 Value<int> characterId = const Value.absent(),
                 required int rank,
+                Value<int> sortOrder = const Value.absent(),
               }) => RankedCharactersCompanion.insert(
                 characterId: characterId,
                 rank: rank,
+                sortOrder: sortOrder,
               ),
           withReferenceMapper:
               (p0) =>
