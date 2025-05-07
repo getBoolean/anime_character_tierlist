@@ -26,6 +26,11 @@ class StoreFuture {
   Future<List<TierData>> getTiers() async {
     return _db.getTiers();
   }
+
+  final tiersProvider = FutureProvider<List<TierData>>((ref) {
+    final store = ref.watch(storeProvider);
+    return store.future.getTiers();
+  });
 }
 
 class StoreStream {
@@ -36,9 +41,14 @@ class StoreStream {
   Stream<List<TierData>> getTiersStream() {
     return _db.getTiersStream();
   }
+
+  final tiersProvider = StreamProvider<List<TierData>>((ref) {
+    final store = ref.watch(storeProvider);
+    return store.stream.getTiersStream();
+  });
 }
 
-final storeProvider = FutureProvider<Store>((ref) async {
+final storeProvider = Provider<Store>((ref) {
   final db = AnimeDatabase();
   return Store(db);
 });
