@@ -7,85 +7,47 @@ part 'store.mapper.dart';
 
 class Store {
   final SharedPreferences _prefs;
-  static const String _tiersKey = 'tiers';
+  static const String _rankedCharactersKey = 'ranked_characters';
 
   Store(this._prefs);
 
-  Future<void> addTier({
-    required String name,
-    List<Character> characters = const [],
-  }) async {
-    final tier = Tier(name: name, characters: characters);
-    final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
-    TierMapper.ensureInitialized();
-    final List<Tier> tiers = MapperContainer.globals.fromJson(
-      existingTiersJson,
-    );
-
-    tiers.add(tier);
-    await _prefs.setString(_tiersKey, MapperContainer.globals.toJson(tiers));
-  }
-
-  Future<void> addCharacterToTier({
-    required String tierName,
+  Future<void> rankCharacter({
     required Character character,
+    required int rank,
   }) async {
-    final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
-    TierMapper.ensureInitialized();
-    final List<Tier> tiers = MapperContainer.globals.fromJson(
-      existingTiersJson,
+    final String existingRankedJson =
+        _prefs.getString(_rankedCharactersKey) ?? '[]';
+    RankedCharacterMapper.ensureInitialized();
+    final List<RankedCharacter> rankedCharacters = MapperContainer.globals
+        .fromJson(existingRankedJson);
+
+    rankedCharacters.removeWhere((rc) => rc.character.id == character.id);
+    final rankedCharacter = RankedCharacter(character: character, rank: rank);
+    rankedCharacters.add(rankedCharacter);
+    await _prefs.setString(
+      _rankedCharactersKey,
+      MapperContainer.globals.toJson(rankedCharacters),
     );
-
-    final tierIndex = tiers.indexWhere((t) => t.name == tierName);
-    if (tierIndex == -1) {
-      throw Exception('Tier not found: $tierName');
-    }
-
-    final oldTier = tiers[tierIndex];
-    if (!oldTier.characters.any((c) => c.id == character.id)) {
-      final newTier = Tier(
-        name: oldTier.name,
-        characters: [...oldTier.characters, character],
-      );
-      tiers[tierIndex] = newTier;
-      await _prefs.setString(_tiersKey, MapperContainer.globals.toJson(tiers));
-    }
-  }
-
-  Future<void> updateCharactersInTier({
-    required String tierName,
-    required List<Character> characters,
-  }) async {
-    final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
-    TierMapper.ensureInitialized();
-    final List<Tier> tiers = MapperContainer.globals.fromJson(
-      existingTiersJson,
-    );
-
-    final tierIndex = tiers.indexWhere((t) => t.name == tierName);
-    if (tierIndex == -1) {
-      throw Exception('Tier not found: $tierName');
-    }
-
-    tiers[tierIndex] = Tier(name: tierName, characters: characters);
-    await _prefs.setString(_tiersKey, MapperContainer.globals.toJson(tiers));
   }
 
   List<Tier> getTiers() {
-    final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
-    TierMapper.ensureInitialized();
-    return MapperContainer.globals.fromJson(existingTiersJson);
+    final String existingRankedJson =
+        _prefs.getString(_rankedCharactersKey) ?? '[]';
+    RankedCharacterMapper.ensureInitialized();
+    final List<RankedCharacter> rankedCharacters = MapperContainer.globals
+        .fromJson(existingRankedJson);
+
+    final groupedByRank = groupBy(
+      rankedCharacters,
+      (RankedCharacter rc) => rc.rank,
+    );
+
+    return groupedByRank.entries.map((entry) {
+        final characters = entry.value.map((rc) => rc.character).toList();
+        return Tier(rank: entry.key, characters: characters);
+      }).toList()
+      ..sort((a, b) => a.rank.compareTo(b.rank));
   }
-
-  // TODO: save ranking process to disk
-
-  // rank character a > character b
-  // implicit character tiers (rank character a == character b)
-  // how to store this?
-
-  // favorite characters per anime
-
-  // save each tier as list of character ids, order matters
 }
 
 final storeProvider = FutureProvider<Store>((ref) async {
@@ -94,11 +56,22 @@ final storeProvider = FutureProvider<Store>((ref) async {
 });
 
 @MappableClass()
+class RankedCharacter with RankedCharacterMappable {
+  final Character character;
+  final int rank;
+
+  const RankedCharacter({required this.character, required this.rank});
+
+  static const fromMap = RankedCharacterMapper.fromMap;
+  static const fromJson = RankedCharacterMapper.fromJson;
+}
+
+@MappableClass()
 class Tier with TierMappable {
-  final String name;
+  final int rank;
   final List<Character> characters;
 
-  const Tier({required this.name, required this.characters});
+  const Tier({required this.rank, required this.characters});
 
   static const fromMap = TierMapper.fromMap;
   static const fromJson = TierMapper.fromJson;
@@ -121,11 +94,15 @@ class UriMapper extends SimpleMapper<Uri> {
 @MappableClass(includeCustomMappers: [UriMapper()])
 class Character with CharacterMappable {
   final int id;
+  final int animeId;
+  final String animeName;
   final String name;
   final List<Uri> pictures;
 
   const Character({
     required this.id,
+    required this.animeId,
+    required this.animeName,
     required this.name,
     required this.pictures,
   });
