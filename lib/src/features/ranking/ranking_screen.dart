@@ -100,10 +100,10 @@ class RankingScreen extends ConsumerWidget {
               return DragAndDropList(
                 canDrag: false,
                 header: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsetsDirectional.only(start: 8.0),
                   child: Text(
                     'Rank ${tier.rank}',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
                 children:
@@ -122,7 +122,7 @@ class RankingScreen extends ConsumerWidget {
             }).toList();
 
         return Container(
-          color: Colors.red,
+          color: Colors.transparent,
           child: DragAndDropLists(
             children: dragAndDropLists,
             onItemReorder: (
@@ -167,8 +167,7 @@ class RankingScreen extends ConsumerWidget {
               color: Theme.of(context).canvasColor,
               borderRadius: BorderRadius.circular(8.0),
             ),
-            addLastItemTargetHeightToTop: true,
-            lastListTargetSize: 200.0,
+            lastItemTargetHeight: 48.0,
             itemDragHandle: DragHandle(
               child: Padding(
                 padding: const EdgeInsetsDirectional.only(end: 24.0),
