@@ -20,7 +20,7 @@ class StoreFuture {
     required int rank,
   }) async {
     await _db.insertCharacter(character, character.pictures);
-    await _db.rankCharacter(character.id, rank);
+    await _db.rankCharacter(character.id, rank, character.sortOrder);
   }
 
   Future<List<TierData>> getTiers() async {

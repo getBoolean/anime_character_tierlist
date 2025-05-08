@@ -103,11 +103,12 @@ class AnimeDatabase extends _$AnimeDatabase {
     });
   }
 
-  Future<void> rankCharacter(int characterId, int rank) async {
+  Future<void> rankCharacter(int characterId, int rank, int sortOrder) async {
     await into(rankedCharacters).insertOnConflictUpdate(
       RankedCharactersCompanion(
         characterId: Value(characterId),
         rank: Value(rank),
+        sortOrder: Value(sortOrder),
       ),
     );
   }
@@ -218,6 +219,17 @@ class CharacterData {
     required this.pictures,
     required this.sortOrder,
   });
+
+  CharacterData copyWith({int? sortOrder}) {
+    return CharacterData(
+      id: id,
+      animeId: animeId,
+      animeName: animeName,
+      name: name,
+      pictures: pictures,
+      sortOrder: sortOrder ?? this.sortOrder,
+    );
+  }
 }
 
 class TierData {

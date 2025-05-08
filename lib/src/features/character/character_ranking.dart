@@ -281,16 +281,21 @@ class EditRankingDialog extends ConsumerStatefulWidget {
 
 class _EditRankingDialogState extends ConsumerState<EditRankingDialog> {
   late final TextEditingController _rankingNumber;
+  late final TextEditingController _sortOrder;
 
   @override
   void initState() {
     super.initState();
     _rankingNumber = TextEditingController(text: widget.currentRank.toString());
+    _sortOrder = TextEditingController(
+      text: widget.character.sortOrder.toString(),
+    );
   }
 
   @override
   void dispose() {
     _rankingNumber.dispose();
+    _sortOrder.dispose();
     super.dispose();
   }
 
@@ -316,6 +321,20 @@ class _EditRankingDialogState extends ConsumerState<EditRankingDialog> {
                 return null;
               },
             ),
+            TextFormField(
+              controller: _sortOrder,
+              decoration: InputDecoration(labelText: 'Sort #'),
+              keyboardType: TextInputType.number,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a sort #';
+                }
+                if (int.tryParse(value) == null) {
+                  return 'Please enter a valid number';
+                }
+                return null;
+              },
+            ),
           ],
         ),
       ),
@@ -327,11 +346,17 @@ class _EditRankingDialogState extends ConsumerState<EditRankingDialog> {
         ElevatedButton(
           onPressed: () async {
             final newRank = int.tryParse(_rankingNumber.text);
-            if (newRank != null) {
+            final newSortOrder = int.tryParse(_sortOrder.text);
+            if (newRank != null && newSortOrder != null) {
               await ref
                   .read(storeProvider)
                   .future
-                  .rankCharacter(character: widget.character, rank: newRank);
+                  .rankCharacter(
+                    character: widget.character.copyWith(
+                      sortOrder: newSortOrder,
+                    ),
+                    rank: newRank,
+                  );
 
               if (context.mounted) {
                 Navigator.pop(context);

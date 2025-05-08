@@ -30,6 +30,7 @@ dependencies:
   drift: ^2.26.1
   drift_dev: ^2.26.1
   sqlite3: ^2.7.5
+  drag_and_drop_lists: ^0.4.2
 
 dev_dependencies:
   flutter_test:
