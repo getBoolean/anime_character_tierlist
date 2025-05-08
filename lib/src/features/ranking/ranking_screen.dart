@@ -64,13 +64,11 @@ class RankingScreen extends ConsumerWidget {
         final dragAndDropLists =
             tiers.map((tier) {
               return DragAndDropList(
-                header: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Text(
-                      'Rank ${tier.rank}',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
+                header: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Rank ${tier.rank}',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
                 children:
@@ -86,61 +84,55 @@ class RankingScreen extends ConsumerWidget {
               );
             }).toList();
 
-        return DragAndDropLists(
-          children: dragAndDropLists,
-          onItemReorder: (
-            int oldItemIndex,
-            int oldListIndex,
-            int newItemIndex,
-            int newListIndex,
-          ) async {
-            final oldTier = tiers[oldListIndex];
-            final newTier = tiers[newListIndex];
-            final movedCharacter = oldTier.characters[oldItemIndex].copyWith(
-              sortOrder: newItemIndex,
-            );
-            if (oldListIndex == newListIndex) {
-              oldTier.characters.removeAt(oldItemIndex);
-              oldTier.characters.insert(newItemIndex, movedCharacter);
-            } else {
-              oldTier.characters.removeAt(oldItemIndex);
-              newTier.characters.insert(newItemIndex, movedCharacter);
-            }
+        return Container(
+          color: Colors.transparent,
+          child: DragAndDropLists(
+            children: dragAndDropLists,
+            onItemReorder: (
+              int oldItemIndex,
+              int oldListIndex,
+              int newItemIndex,
+              int newListIndex,
+            ) async {
+              final oldTier = tiers[oldListIndex];
+              final newTier = tiers[newListIndex];
+              final movedCharacter = oldTier.characters[oldItemIndex].copyWith(
+                sortOrder: newItemIndex,
+              );
+              if (oldListIndex == newListIndex) {
+                oldTier.characters.removeAt(oldItemIndex);
+                oldTier.characters.insert(newItemIndex, movedCharacter);
+              } else {
+                oldTier.characters.removeAt(oldItemIndex);
+                newTier.characters.insert(newItemIndex, movedCharacter);
+                await store.future.rankCharacters(
+                  characters:
+                      oldTier.characters
+                          .mapIndexed((i, c) => c.copyWith(sortOrder: i))
+                          .toList(),
+                  rank: oldTier.rank,
+                );
+              }
 
-            // if (oldListIndex != newListIndex || oldItemIndex != newItemIndex) {
-            //   // Character moved to a different tier
-            //   await store.future.rankCharacter(
-            //     character: movedCharacter,
-            //     rank: newTier.rank,
-            //   );
-            // }
-
-            // Update sort order of all characters in the new tier and old tier to their index
-            await store.future.rankCharacters(
-              characters:
-                  newTier.characters
-                      .mapIndexed((i, c) => c.copyWith(sortOrder: i))
-                      .toList(),
-              rank: newTier.rank,
-            );
-            await store.future.rankCharacters(
-              characters:
-                  oldTier.characters
-                      .mapIndexed((i, c) => c.copyWith(sortOrder: i))
-                      .toList(),
-              rank: oldTier.rank,
-            );
-          },
-          onListReorder: (int oldListIndex, int newListIndex) {
-            // We don't support reordering tiers themselves
-            return;
-          },
-          listInnerDecoration: BoxDecoration(
-            color: Theme.of(context).canvasColor,
-            borderRadius: BorderRadius.circular(8.0),
+              await store.future.rankCharacters(
+                characters:
+                    newTier.characters
+                        .mapIndexed((i, c) => c.copyWith(sortOrder: i))
+                        .toList(),
+                rank: newTier.rank,
+              );
+            },
+            onListReorder: (int oldListIndex, int newListIndex) {
+              // We don't support reordering tiers themselves
+              return;
+            },
+            listInnerDecoration: BoxDecoration(
+              color: Theme.of(context).canvasColor,
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            addLastItemTargetHeightToTop: true,
+            lastListTargetSize: 200.0,
           ),
-          addLastItemTargetHeightToTop: true,
-          lastListTargetSize: 40.0,
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
