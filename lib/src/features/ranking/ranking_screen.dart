@@ -10,6 +10,7 @@ class RankingScreen extends ConsumerWidget {
   const RankingScreen({super.key});
 
   Widget _buildCharacterTile(
+    WidgetRef ref,
     BuildContext context,
     CharacterData character,
     int tierRank,
@@ -29,6 +30,8 @@ class RankingScreen extends ConsumerWidget {
         subtitle: Text(character.animeName),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             IconButton(
               icon: const Icon(Icons.edit),
@@ -43,7 +46,38 @@ class RankingScreen extends ConsumerWidget {
                 );
               },
             ),
-            const Icon(Icons.drag_handle),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                // ask for confirmation
+                final confirmed =
+                    await showDialog<bool>(
+                      context: context,
+                      builder:
+                          (context) => AlertDialog(
+                            title: const Text('Delete Character'),
+                            content: const Text(
+                              'Are you sure you want to delete this character?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                    ) ??
+                    false;
+                if (confirmed) {
+                  ref.read(storeProvider).future.deleteCharacter(character.id);
+                }
+              },
+            ),
+            SizedBox(width: 16.0),
           ],
         ),
       ),
@@ -64,6 +98,7 @@ class RankingScreen extends ConsumerWidget {
         final dragAndDropLists =
             tiers.map((tier) {
               return DragAndDropList(
+                canDrag: false,
                 header: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
@@ -74,7 +109,9 @@ class RankingScreen extends ConsumerWidget {
                 children:
                     tier.characters.map((character) {
                       return DragAndDropItem(
+                        key: ValueKey(character.id),
                         child: _buildCharacterTile(
+                          ref,
                           context,
                           character,
                           tier.rank,
@@ -85,7 +122,7 @@ class RankingScreen extends ConsumerWidget {
             }).toList();
 
         return Container(
-          color: Colors.transparent,
+          color: Colors.red,
           child: DragAndDropLists(
             children: dragAndDropLists,
             onItemReorder: (
@@ -132,6 +169,12 @@ class RankingScreen extends ConsumerWidget {
             ),
             addLastItemTargetHeightToTop: true,
             lastListTargetSize: 200.0,
+            itemDragHandle: DragHandle(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.only(end: 24.0),
+                child: Icon(Icons.drag_handle),
+              ),
+            ),
           ),
         );
       },

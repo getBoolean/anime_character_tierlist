@@ -35,6 +35,10 @@ class StoreFuture {
     await _db.rankCharacter(character.id, rank, character.sortOrder);
   }
 
+  Future<void> deleteCharacter(int id) async {
+    await _db.deleteCharacter(id);
+  }
+
   Future<List<TierData>> getTiers() async {
     return _db.getTiers();
   }

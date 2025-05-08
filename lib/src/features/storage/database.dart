@@ -112,6 +112,12 @@ class AnimeDatabase extends _$AnimeDatabase {
     );
   }
 
+  Future<void> deleteCharacter(int id) async {
+    delete(characterPictures).where((table) => table.characterId.equals(id));
+    delete(rankedCharacters).where((table) => table.characterId.equals(id));
+    delete(characters).where((table) => table.id.equals(id));
+  }
+
   Future<CharacterData> _buildCharacterData(
     Character characterRow,
     RankedCharacter rankedCharacterRow,
