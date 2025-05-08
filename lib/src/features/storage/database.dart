@@ -233,13 +233,13 @@ class CharacterData {
     required this.sortOrder,
   });
 
-  CharacterData copyWith({int? sortOrder}) {
+  CharacterData copyWith({int? sortOrder, List<Uri>? pictures}) {
     return CharacterData(
       id: id,
       animeId: animeId,
       animeName: animeName,
       name: name,
-      pictures: pictures,
+      pictures: pictures ?? this.pictures,
       sortOrder: sortOrder ?? this.sortOrder,
     );
   }

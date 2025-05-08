@@ -282,6 +282,25 @@ class EditRankingDialog extends ConsumerStatefulWidget {
 class _EditRankingDialogState extends ConsumerState<EditRankingDialog> {
   late final TextEditingController _rankingNumber;
   late final TextEditingController _sortOrder;
+  final List<String> _pictures = [];
+  final _pictureFormKey = GlobalKey<FormState>();
+  final TextEditingController _newPictureUrl = TextEditingController();
+
+  void _addPicture() {
+    final isValid = _pictureFormKey.currentState!.validate();
+    if (isValid) {
+      setState(() {
+        _pictures.add(_newPictureUrl.text);
+        _newPictureUrl.clear();
+      });
+    }
+  }
+
+  void _removePicture(int index) {
+    setState(() {
+      _pictures.removeAt(index);
+    });
+  }
 
   @override
   void initState() {
@@ -335,6 +354,49 @@ class _EditRankingDialogState extends ConsumerState<EditRankingDialog> {
                 return null;
               },
             ),
+            Row(
+              children: [
+                Expanded(
+                  child: Form(
+                    key: _pictureFormKey,
+                    child: TextFormField(
+                      controller: _newPictureUrl,
+                      decoration: InputDecoration(labelText: 'Picture URL'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a picture URL';
+                        }
+                        final uri = Uri.tryParse(value);
+                        if (uri == null || !uri.isAbsolute) {
+                          return 'Please enter a valid URL';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ),
+                IconButton(icon: Icon(Icons.add), onPressed: _addPicture),
+              ],
+            ),
+            if (_pictures.isNotEmpty) ...[
+              SizedBox(height: 8),
+              ..._pictures.mapIndexed(
+                (index, url) => ListTile(
+                  dense: true,
+                  title: Text(
+                    _pictures[index],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () => _removePicture(index),
+                    padding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -354,6 +416,7 @@ class _EditRankingDialogState extends ConsumerState<EditRankingDialog> {
                   .rankCharacter(
                     character: widget.character.copyWith(
                       sortOrder: newSortOrder,
+                      pictures: _pictures.map((e) => Uri.parse(e)).toList(),
                     ),
                     rank: newRank,
                   );
