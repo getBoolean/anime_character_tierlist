@@ -6,15 +6,142 @@ import 'package:anime_character_tierlist/src/features/storage/store.dart';
 import 'package:anime_character_tierlist/src/features/storage/database.dart';
 import 'package:anime_character_tierlist/src/features/character/character_ranking.dart';
 
-class RankingScreen extends ConsumerWidget {
+class RankingScreen extends ConsumerStatefulWidget {
   const RankingScreen({super.key});
 
-  Widget _buildCharacterTile(
-    WidgetRef ref,
-    BuildContext context,
-    CharacterData character,
-    int tierRank,
-  ) {
+  @override
+  ConsumerState<RankingScreen> createState() => _RankingScreenState();
+}
+
+class _RankingScreenState extends ConsumerState<RankingScreen> {
+  List<TierData>? _tiers;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = ref.watch(storeProvider);
+    final tiers = ref.watch(store.stream.tiersProvider).valueOrNull ?? _tiers;
+    if (tiers == null) {
+      return const Center(child: Text('Loading...'));
+    } else if (tiers.isEmpty) {
+      return const Center(child: Text('No characters ranked yet'));
+    }
+    ref.listen(store.stream.tiersProvider, (prev, val) {
+      val.whenData((newTiers) {
+        setState(() {
+          _tiers = newTiers;
+        });
+      });
+    });
+
+    if (tiers.isEmpty) {
+      return const Center(child: Text('No characters ranked yet'));
+    }
+
+    final dragAndDropLists =
+        tiers.map((tier) {
+          return DragAndDropList(
+            canDrag: false,
+            header: Padding(
+              padding: const EdgeInsetsDirectional.only(start: 8.0),
+              child: Text(
+                'Rank ${tier.rank}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            children:
+                tier.characters.map((character) {
+                  return DragAndDropItem(
+                    key: ValueKey(character.id),
+                    child: CharacterTileWidget(
+                      character: character,
+                      tierRank: tier.rank,
+                    ),
+                  );
+                }).toList(),
+          );
+        }).toList();
+
+    return Container(
+      color: Colors.transparent,
+      child: DragAndDropLists(
+        children: dragAndDropLists,
+        onItemReorder: (
+          int oldItemIndex,
+          int oldListIndex,
+          int newItemIndex,
+          int newListIndex,
+        ) async {
+          final oldTier = tiers[oldListIndex];
+          final newTier = tiers[newListIndex];
+          final movedCharacter = oldTier.characters[oldItemIndex].copyWith(
+            sortOrder: newItemIndex,
+          );
+          if (oldListIndex == newListIndex) {
+            oldTier.characters.removeAt(oldItemIndex);
+            oldTier.characters.insert(newItemIndex, movedCharacter);
+            setState(() {
+              _tiers = tiers;
+            });
+          } else {
+            oldTier.characters.removeAt(oldItemIndex);
+            newTier.characters.insert(newItemIndex, movedCharacter);
+            setState(() {
+              _tiers = tiers;
+            });
+            await store.future.rankCharacters(
+              characters:
+                  oldTier.characters
+                      .mapIndexed((i, c) => c.copyWith(sortOrder: i))
+                      .toList(),
+              rank: oldTier.rank,
+            );
+          }
+
+          await store.future.rankCharacters(
+            characters:
+                newTier.characters
+                    .mapIndexed((i, c) => c.copyWith(sortOrder: i))
+                    .toList(),
+            rank: newTier.rank,
+          );
+        },
+        onListReorder: (int oldListIndex, int newListIndex) {
+          // We don't support reordering tiers themselves
+          return;
+        },
+        listInnerDecoration: BoxDecoration(
+          color: Theme.of(context).canvasColor,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        lastItemTargetHeight: 48.0,
+        itemDragHandle: DragHandle(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(end: 24.0),
+            child: Icon(Icons.drag_handle),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CharacterTileWidget extends ConsumerWidget {
+  const CharacterTileWidget({
+    super.key,
+    required this.character,
+    required this.tierRank,
+  });
+
+  final CharacterData character;
+  final int tierRank;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: ListTile(
@@ -81,104 +208,6 @@ class RankingScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final store = ref.watch(storeProvider);
-    final tiersAsync = ref.watch(store.stream.tiersProvider);
-
-    return tiersAsync.when(
-      data: (tiers) {
-        if (tiers.isEmpty) {
-          return const Center(child: Text('No characters ranked yet'));
-        }
-
-        final dragAndDropLists =
-            tiers.map((tier) {
-              return DragAndDropList(
-                canDrag: false,
-                header: Padding(
-                  padding: const EdgeInsetsDirectional.only(start: 8.0),
-                  child: Text(
-                    'Rank ${tier.rank}',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                children:
-                    tier.characters.map((character) {
-                      return DragAndDropItem(
-                        key: ValueKey(character.id),
-                        child: _buildCharacterTile(
-                          ref,
-                          context,
-                          character,
-                          tier.rank,
-                        ),
-                      );
-                    }).toList(),
-              );
-            }).toList();
-
-        return Container(
-          color: Colors.transparent,
-          child: DragAndDropLists(
-            children: dragAndDropLists,
-            onItemReorder: (
-              int oldItemIndex,
-              int oldListIndex,
-              int newItemIndex,
-              int newListIndex,
-            ) async {
-              final oldTier = tiers[oldListIndex];
-              final newTier = tiers[newListIndex];
-              final movedCharacter = oldTier.characters[oldItemIndex].copyWith(
-                sortOrder: newItemIndex,
-              );
-              if (oldListIndex == newListIndex) {
-                oldTier.characters.removeAt(oldItemIndex);
-                oldTier.characters.insert(newItemIndex, movedCharacter);
-              } else {
-                oldTier.characters.removeAt(oldItemIndex);
-                newTier.characters.insert(newItemIndex, movedCharacter);
-                await store.future.rankCharacters(
-                  characters:
-                      oldTier.characters
-                          .mapIndexed((i, c) => c.copyWith(sortOrder: i))
-                          .toList(),
-                  rank: oldTier.rank,
-                );
-              }
-
-              await store.future.rankCharacters(
-                characters:
-                    newTier.characters
-                        .mapIndexed((i, c) => c.copyWith(sortOrder: i))
-                        .toList(),
-                rank: newTier.rank,
-              );
-            },
-            onListReorder: (int oldListIndex, int newListIndex) {
-              // We don't support reordering tiers themselves
-              return;
-            },
-            listInnerDecoration: BoxDecoration(
-              color: Theme.of(context).canvasColor,
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            lastItemTargetHeight: 48.0,
-            itemDragHandle: DragHandle(
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(end: 24.0),
-                child: Icon(Icons.drag_handle),
-              ),
-            ),
-          ),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => Center(child: Text('Error: $error')),
     );
   }
 }
