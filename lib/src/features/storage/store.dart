@@ -1,129 +1,70 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:dart_mappable/dart_mappable.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:collection/collection.dart';
-
-part 'store.mapper.dart';
+import 'database.dart';
 
 class Store {
-  final SharedPreferences _prefs;
-  static const String _tiersKey = 'tiers';
+  final AnimeDatabase _db;
 
-  Store(this._prefs);
+  Store(this._db);
 
-  Future<void> addTier({
-    required String name,
-    List<Character> characters = const [],
-  }) async {
-    final tier = Tier(name: name, characters: characters);
-    final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
-    TierMapper.ensureInitialized();
-    final List<Tier> tiers = MapperContainer.globals.fromJson(
-      existingTiersJson,
-    );
-
-    tiers.add(tier);
-    await _prefs.setString(_tiersKey, MapperContainer.globals.toJson(tiers));
-  }
-
-  Future<void> addCharacterToTier({
-    required String tierName,
-    required Character character,
-  }) async {
-    final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
-    TierMapper.ensureInitialized();
-    final List<Tier> tiers = MapperContainer.globals.fromJson(
-      existingTiersJson,
-    );
-
-    final tierIndex = tiers.indexWhere((t) => t.name == tierName);
-    if (tierIndex == -1) {
-      throw Exception('Tier not found: $tierName');
-    }
-
-    final oldTier = tiers[tierIndex];
-    if (!oldTier.characters.any((c) => c.id == character.id)) {
-      final newTier = Tier(
-        name: oldTier.name,
-        characters: [...oldTier.characters, character],
-      );
-      tiers[tierIndex] = newTier;
-      await _prefs.setString(_tiersKey, MapperContainer.globals.toJson(tiers));
-    }
-  }
-
-  Future<void> updateCharactersInTier({
-    required String tierName,
-    required List<Character> characters,
-  }) async {
-    final String existingTiersJson = _prefs.getString(_tiersKey) ?? '[]';
-    TierMapper.ensureInitialized();
-    final List<Tier> tiers = MapperContainer.globals.fromJson(
-      existingTiersJson,
-    );
-
-    final tierIndex = tiers.indexWhere((t) => t.name == tierName);
-    if (tierIndex == -1) {
-      throw Exception('Tier not found: $tierName');
-    }
-
-    tiers[tierIndex] = Tier(name: tierName, characters: characters);
-    await _prefs.setString(_tiersKey, MapperContainer.globals.toJson(tiers));
-  }
-
-  // TODO: save ranking process to disk
-
-  // rank character a > character b
-  // implicit character tiers (rank character a == character b)
-  // how to store this?
-
-  // favorite characters per anime
-
-  // save each tier as list of character ids, order matters
+  late final future = StoreFuture(_db);
+  late final stream = StoreStream(_db);
 }
 
-final storeProvider = FutureProvider<Store>((ref) async {
-  final prefs = await SharedPreferences.getInstance();
-  return Store(prefs);
-});
+class StoreFuture {
+  final AnimeDatabase _db;
 
-@MappableClass()
-class Tier with TierMappable {
-  final String name;
-  final List<Character> characters;
+  StoreFuture(this._db);
 
-  const Tier({required this.name, required this.characters});
-
-  static const fromMap = TierMapper.fromMap;
-  static const fromJson = TierMapper.fromJson;
-}
-
-class UriMapper extends SimpleMapper<Uri> {
-  const UriMapper();
-
-  @override
-  Uri decode(dynamic value) {
-    return Uri.parse(value as String);
+  Future<void> rankCharacters({
+    required List<CharacterData> characters,
+    required int rank,
+  }) async {
+    await _db.transaction(() async {
+      for (final character in characters) {
+        await _db.insertCharacter(character, character.pictures);
+        await _db.rankCharacter(character.id, rank, character.sortOrder);
+      }
+    });
   }
 
-  @override
-  dynamic encode(Uri self) {
-    return self.toString();
+  Future<void> rankCharacter({
+    required CharacterData character,
+    required int rank,
+  }) async {
+    await _db.insertCharacter(character, character.pictures);
+    await _db.rankCharacter(character.id, rank, character.sortOrder);
   }
-}
 
-@MappableClass(includeCustomMappers: [UriMapper()])
-class Character with CharacterMappable {
-  final int id;
-  final String name;
-  final List<Uri> pictures;
+  Future<void> deleteCharacter(int id) async {
+    await _db.deleteCharacter(id);
+  }
 
-  const Character({
-    required this.id,
-    required this.name,
-    required this.pictures,
+  Future<List<TierData>> getTiers() async {
+    return _db.getTiers();
+  }
+
+  final tiersProvider = FutureProvider<List<TierData>>((ref) {
+    final store = ref.watch(storeProvider);
+    return store.future.getTiers();
   });
-
-  static const fromMap = CharacterMapper.fromMap;
-  static const fromJson = CharacterMapper.fromJson;
 }
+
+class StoreStream {
+  final AnimeDatabase _db;
+
+  StoreStream(this._db);
+
+  Stream<List<TierData>> getTiersStream() {
+    return _db.getTiersStream();
+  }
+
+  final tiersProvider = StreamProvider<List<TierData>>((ref) {
+    final store = ref.watch(storeProvider);
+    return store.stream.getTiersStream();
+  });
+}
+
+final storeProvider = Provider<Store>((ref) {
+  final db = AnimeDatabase();
+  return Store(db);
+});

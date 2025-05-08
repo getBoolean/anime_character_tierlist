@@ -1,4 +1,6 @@
 import 'package:anime_character_tierlist/src/features/auth.dart';
+import 'package:anime_character_tierlist/src/features/character/character_ranking.dart';
+import 'package:anime_character_tierlist/src/features/ranking/ranking_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -7,33 +9,18 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authNotifierProvider);
     return Scaffold(
       appBar: AppBar(title: Text('Home')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('AniChar Tierlist'),
-
-            ...authState.when(
-              data: (state) {
-                final credential = state.credential;
-                return credential != null
-                    ? [
-                      Text('Logged in as: ${state.username}'),
-                      ElevatedButton(
-                        onPressed: ref.read(authServiceProvider).logout,
-                        child: Text('Logout'),
-                      ),
-                    ]
-                    : [];
-              },
-              error: (err, st) => [Text('Error: $err')],
-              loading: () => [CircularProgressIndicator()],
-            ),
-          ],
-        ),
+      body: Center(child: RankingScreen()),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => CharacterFormDialog(),
+          );
+        },
+        tooltip: 'Add New Character Ranking',
+        child: Icon(Icons.add),
       ),
     );
   }

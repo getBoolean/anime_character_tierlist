@@ -28,6 +28,19 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        ndk {
+            // Specifies the ABI configurations of your native
+            // libraries Gradle should build and package with your APK.
+            // Here is a list of supported ABIs:
+            // https://developer.android.com/ndk/guides/abis
+            abiFilters.addAll(
+                setOf(
+                "armeabi-v7a",
+                "arm64-v8a",
+                "x86_64"
+                )
+            )
+        }
     }
 
     buildTypes {
