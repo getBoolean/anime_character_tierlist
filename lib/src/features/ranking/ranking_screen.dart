@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:drag_and_drop_lists/drag_and_drop_lists.dart';
@@ -98,14 +99,37 @@ class RankingScreen extends ConsumerWidget {
             final movedCharacter = oldTier.characters[oldItemIndex].copyWith(
               sortOrder: newItemIndex,
             );
-
-            if (oldListIndex != newListIndex || oldItemIndex != newItemIndex) {
-              // Character moved to a different tier
-              await store.future.rankCharacter(
-                character: movedCharacter,
-                rank: newTier.rank,
-              );
+            if (oldListIndex == newListIndex) {
+              oldTier.characters.removeAt(oldItemIndex);
+              oldTier.characters.insert(newItemIndex, movedCharacter);
+            } else {
+              oldTier.characters.removeAt(oldItemIndex);
+              newTier.characters.insert(newItemIndex, movedCharacter);
             }
+
+            // if (oldListIndex != newListIndex || oldItemIndex != newItemIndex) {
+            //   // Character moved to a different tier
+            //   await store.future.rankCharacter(
+            //     character: movedCharacter,
+            //     rank: newTier.rank,
+            //   );
+            // }
+
+            // Update sort order of all characters in the new tier and old tier to their index
+            await store.future.rankCharacters(
+              characters:
+                  newTier.characters
+                      .mapIndexed((i, c) => c.copyWith(sortOrder: i))
+                      .toList(),
+              rank: newTier.rank,
+            );
+            await store.future.rankCharacters(
+              characters:
+                  oldTier.characters
+                      .mapIndexed((i, c) => c.copyWith(sortOrder: i))
+                      .toList(),
+              rank: oldTier.rank,
+            );
           },
           onListReorder: (int oldListIndex, int newListIndex) {
             // We don't support reordering tiers themselves

@@ -15,6 +15,18 @@ class StoreFuture {
 
   StoreFuture(this._db);
 
+  Future<void> rankCharacters({
+    required List<CharacterData> characters,
+    required int rank,
+  }) async {
+    await _db.transaction(() async {
+      for (final character in characters) {
+        await _db.insertCharacter(character, character.pictures);
+        await _db.rankCharacter(character.id, rank, character.sortOrder);
+      }
+    });
+  }
+
   Future<void> rankCharacter({
     required CharacterData character,
     required int rank,

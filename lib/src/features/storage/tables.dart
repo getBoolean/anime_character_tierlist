@@ -12,9 +12,12 @@ class Characters extends Table {
 }
 
 @DataClassName('CharacterPicture')
-class CharacterPictures extends Table with AutoIncrementingPrimaryKey {
+class CharacterPictures extends Table {
   IntColumn get characterId => integer().references(Characters, #id)();
   TextColumn get pictureUri => text()();
+
+  @override
+  Set<Column> get primaryKey => {characterId, pictureUri};
 }
 
 @DataClassName('RankedCharacter')

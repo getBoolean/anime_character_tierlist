@@ -307,19 +307,6 @@ class $CharacterPicturesTable extends CharacterPictures
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $CharacterPicturesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
   static const VerificationMeta _characterIdMeta = const VerificationMeta(
     'characterId',
   );
@@ -346,7 +333,7 @@ class $CharacterPicturesTable extends CharacterPictures
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, characterId, pictureUri];
+  List<GeneratedColumn> get $columns => [characterId, pictureUri];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -359,9 +346,6 @@ class $CharacterPicturesTable extends CharacterPictures
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
     if (data.containsKey('character_id')) {
       context.handle(
         _characterIdMeta,
@@ -385,16 +369,11 @@ class $CharacterPicturesTable extends CharacterPictures
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {id};
+  Set<GeneratedColumn> get $primaryKey => {characterId, pictureUri};
   @override
   CharacterPicture map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return CharacterPicture(
-      id:
-          attachedDatabase.typeMapping.read(
-            DriftSqlType.int,
-            data['${effectivePrefix}id'],
-          )!,
       characterId:
           attachedDatabase.typeMapping.read(
             DriftSqlType.int,
@@ -416,18 +395,12 @@ class $CharacterPicturesTable extends CharacterPictures
 
 class CharacterPicture extends DataClass
     implements Insertable<CharacterPicture> {
-  final int id;
   final int characterId;
   final String pictureUri;
-  const CharacterPicture({
-    required this.id,
-    required this.characterId,
-    required this.pictureUri,
-  });
+  const CharacterPicture({required this.characterId, required this.pictureUri});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
     map['character_id'] = Variable<int>(characterId);
     map['picture_uri'] = Variable<String>(pictureUri);
     return map;
@@ -435,7 +408,6 @@ class CharacterPicture extends DataClass
 
   CharacterPicturesCompanion toCompanion(bool nullToAbsent) {
     return CharacterPicturesCompanion(
-      id: Value(id),
       characterId: Value(characterId),
       pictureUri: Value(pictureUri),
     );
@@ -447,7 +419,6 @@ class CharacterPicture extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CharacterPicture(
-      id: serializer.fromJson<int>(json['id']),
       characterId: serializer.fromJson<int>(json['characterId']),
       pictureUri: serializer.fromJson<String>(json['pictureUri']),
     );
@@ -456,21 +427,18 @@ class CharacterPicture extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
       'characterId': serializer.toJson<int>(characterId),
       'pictureUri': serializer.toJson<String>(pictureUri),
     };
   }
 
-  CharacterPicture copyWith({int? id, int? characterId, String? pictureUri}) =>
+  CharacterPicture copyWith({int? characterId, String? pictureUri}) =>
       CharacterPicture(
-        id: id ?? this.id,
         characterId: characterId ?? this.characterId,
         pictureUri: pictureUri ?? this.pictureUri,
       );
   CharacterPicture copyWithCompanion(CharacterPicturesCompanion data) {
     return CharacterPicture(
-      id: data.id.present ? data.id.value : this.id,
       characterId:
           data.characterId.present ? data.characterId.value : this.characterId,
       pictureUri:
@@ -481,7 +449,6 @@ class CharacterPicture extends DataClass
   @override
   String toString() {
     return (StringBuffer('CharacterPicture(')
-          ..write('id: $id, ')
           ..write('characterId: $characterId, ')
           ..write('pictureUri: $pictureUri')
           ..write(')'))
@@ -489,66 +456,65 @@ class CharacterPicture extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(id, characterId, pictureUri);
+  int get hashCode => Object.hash(characterId, pictureUri);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CharacterPicture &&
-          other.id == this.id &&
           other.characterId == this.characterId &&
           other.pictureUri == this.pictureUri);
 }
 
 class CharacterPicturesCompanion extends UpdateCompanion<CharacterPicture> {
-  final Value<int> id;
   final Value<int> characterId;
   final Value<String> pictureUri;
+  final Value<int> rowid;
   const CharacterPicturesCompanion({
-    this.id = const Value.absent(),
     this.characterId = const Value.absent(),
     this.pictureUri = const Value.absent(),
+    this.rowid = const Value.absent(),
   });
   CharacterPicturesCompanion.insert({
-    this.id = const Value.absent(),
     required int characterId,
     required String pictureUri,
+    this.rowid = const Value.absent(),
   }) : characterId = Value(characterId),
        pictureUri = Value(pictureUri);
   static Insertable<CharacterPicture> custom({
-    Expression<int>? id,
     Expression<int>? characterId,
     Expression<String>? pictureUri,
+    Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
-      if (id != null) 'id': id,
       if (characterId != null) 'character_id': characterId,
       if (pictureUri != null) 'picture_uri': pictureUri,
+      if (rowid != null) 'rowid': rowid,
     });
   }
 
   CharacterPicturesCompanion copyWith({
-    Value<int>? id,
     Value<int>? characterId,
     Value<String>? pictureUri,
+    Value<int>? rowid,
   }) {
     return CharacterPicturesCompanion(
-      id: id ?? this.id,
       characterId: characterId ?? this.characterId,
       pictureUri: pictureUri ?? this.pictureUri,
+      rowid: rowid ?? this.rowid,
     );
   }
 
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
     if (characterId.present) {
       map['character_id'] = Variable<int>(characterId.value);
     }
     if (pictureUri.present) {
       map['picture_uri'] = Variable<String>(pictureUri.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
     }
     return map;
   }
@@ -556,9 +522,9 @@ class CharacterPicturesCompanion extends UpdateCompanion<CharacterPicture> {
   @override
   String toString() {
     return (StringBuffer('CharacterPicturesCompanion(')
-          ..write('id: $id, ')
           ..write('characterId: $characterId, ')
-          ..write('pictureUri: $pictureUri')
+          ..write('pictureUri: $pictureUri, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -1240,15 +1206,15 @@ typedef $$CharactersTableProcessedTableManager =
     >;
 typedef $$CharacterPicturesTableCreateCompanionBuilder =
     CharacterPicturesCompanion Function({
-      Value<int> id,
       required int characterId,
       required String pictureUri,
+      Value<int> rowid,
     });
 typedef $$CharacterPicturesTableUpdateCompanionBuilder =
     CharacterPicturesCompanion Function({
-      Value<int> id,
       Value<int> characterId,
       Value<String> pictureUri,
+      Value<int> rowid,
     });
 
 final class $$CharacterPicturesTableReferences
@@ -1296,11 +1262,6 @@ class $$CharacterPicturesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get pictureUri => $composableBuilder(
     column: $table.pictureUri,
     builder: (column) => ColumnFilters(column),
@@ -1339,11 +1300,6 @@ class $$CharacterPicturesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get pictureUri => $composableBuilder(
     column: $table.pictureUri,
     builder: (column) => ColumnOrderings(column),
@@ -1382,9 +1338,6 @@ class $$CharacterPicturesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
   GeneratedColumn<String> get pictureUri => $composableBuilder(
     column: $table.pictureUri,
     builder: (column) => column,
@@ -1453,23 +1406,23 @@ class $$CharacterPicturesTableTableManager
               ),
           updateCompanionCallback:
               ({
-                Value<int> id = const Value.absent(),
                 Value<int> characterId = const Value.absent(),
                 Value<String> pictureUri = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
               }) => CharacterPicturesCompanion(
-                id: id,
                 characterId: characterId,
                 pictureUri: pictureUri,
+                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                Value<int> id = const Value.absent(),
                 required int characterId,
                 required String pictureUri,
+                Value<int> rowid = const Value.absent(),
               }) => CharacterPicturesCompanion.insert(
-                id: id,
                 characterId: characterId,
                 pictureUri: pictureUri,
+                rowid: rowid,
               ),
           withReferenceMapper:
               (p0) =>

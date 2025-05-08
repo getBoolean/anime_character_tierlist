@@ -22,6 +22,7 @@ class AnimeDatabase extends _$AnimeDatabase {
               name: 'anime-character-tierlist-app',
               native: const DriftNativeOptions(
                 databaseDirectory: getApplicationSupportDirectory,
+                shareAcrossIsolates: true,
               ),
               web: DriftWebOptions(
                 sqlite3Wasm: Uri.parse('sqlite3.wasm'),
@@ -41,7 +42,7 @@ class AnimeDatabase extends _$AnimeDatabase {
   AnimeDatabase.forTesting(DatabaseConnection super.connection);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   Future<List<CharacterData>> getAllCharacters() async {
     final charactersQuery = select(characters);
@@ -80,27 +81,25 @@ class AnimeDatabase extends _$AnimeDatabase {
     CharacterData character,
     List<Uri> pictures,
   ) async {
-    await transaction(() async {
-      // Insert character first
-      await into(characters).insertOnConflictUpdate(
-        CharactersCompanion(
-          id: Value(character.id),
-          animeId: Value(character.animeId),
-          animeName: Value(character.animeName),
-          name: Value(character.name),
+    // Insert character first
+    await into(characters).insertOnConflictUpdate(
+      CharactersCompanion(
+        id: Value(character.id),
+        animeId: Value(character.animeId),
+        animeName: Value(character.animeName),
+        name: Value(character.name),
+      ),
+    );
+
+    // Insert pictures
+    for (final pictureUri in pictures) {
+      await into(characterPictures).insertOnConflictUpdate(
+        CharacterPicturesCompanion(
+          characterId: Value(character.id),
+          pictureUri: Value(pictureUri.toString()),
         ),
       );
-
-      // Insert pictures
-      for (final pictureUri in pictures) {
-        await into(characterPictures).insertOnConflictUpdate(
-          CharacterPicturesCompanion(
-            characterId: Value(character.id),
-            pictureUri: Value(pictureUri.toString()),
-          ),
-        );
-      }
-    });
+    }
   }
 
   Future<void> rankCharacter(int characterId, int rank, int sortOrder) async {
@@ -185,6 +184,20 @@ class AnimeDatabase extends _$AnimeDatabase {
             schema.rankedCharacters.sortOrder,
           );
           await m.alterTable(TableMigration(schema.rankedCharacters));
+        },
+        from2To3: (m, schema) async {
+          // insert into table, ignore duplicates
+          await m.alterTable(
+            TableMigration(
+              schema.characterPictures,
+              columnTransformer: {
+                schema.characterPictures.pictureUri: schema
+                    .characterPictures
+                    .pictureUri
+                    .collate(Collate.rTrim),
+              },
+            ),
+          );
         },
       ),
       beforeOpen: (details) async {
