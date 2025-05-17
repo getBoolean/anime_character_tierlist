@@ -43,3 +43,5 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+web/sqlite3.wasm
+web/sqflite_sw.js
