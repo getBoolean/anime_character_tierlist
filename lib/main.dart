@@ -19,7 +19,7 @@ void main(args) async {
     'ENABLE_HASH_URL_STRATEGY',
     defaultValue: false,
   );
-  if (kIsWeb && !useHashUrlStrategy) {
+  if (!useHashUrlStrategy) {
     usePathUrlStrategy();
   }
   runApp(ProviderScope(child: MyApp()));
