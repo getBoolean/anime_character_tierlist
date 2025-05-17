@@ -782,6 +782,12 @@ jobs:
       - name: Bootstrap Melos
         run: melos bootstrap
 
+        # https://pub.dev/packages/sqflite_common_ffi_web
+      - name: Setup sqflite
+        run: |
+          cd packages/mangabackupconverter_cli
+          dart run sqflite_common_ffi_web:setup
+
       - name: Build Web
         run: |
           flutter pub get
@@ -850,6 +856,12 @@ jobs:
       - name: Bootstrap Melos
         if: github.actor != 'dependabot[bot]'
         run: melos bootstrap
+
+        # https://pub.dev/packages/sqflite_common_ffi_web
+      - name: Setup sqflite
+        run: |
+          cd packages/mangabackupconverter_cli
+          dart run sqflite_common_ffi_web:setup
 
       - name: Build Web
         if: github.actor != 'dependabot[bot]'
