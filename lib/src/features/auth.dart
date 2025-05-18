@@ -221,7 +221,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
       return;
     }
 
-    if (DateTime.now().isAfter(credential.expiresAt)) {
+    if (DateTime.now().isBefore(credential.expiresAt)) {
       await _refreshAccessToken(credential.refreshToken);
     }
   }
