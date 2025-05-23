@@ -31,7 +31,7 @@ dependencies:
   drift_flutter: ^0.2.4
   drift: ^2.26.1
   drift_dev: ^2.26.1
-  sqlite3: ^2.7.5
+  sqlite3: ^2.7.6
   drag_and_drop_lists: ^0.4.2
 
 dev_dependencies:
