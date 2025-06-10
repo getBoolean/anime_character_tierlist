@@ -1,15 +1,19 @@
 import 'dart:convert';
+import 'dart:io' as io;
 import 'dart:math';
 
+import 'package:anime_character_tierlist/src/env/env.dart';
+import 'package:anime_character_tierlist/src/exceptions/auth_exception.dart';
 import 'package:anime_character_tierlist/src/exceptions/mal_exception.dart';
 import 'package:anime_character_tierlist/src/features/mal_api/mal.dart';
 import 'package:app_links/app_links.dart';
 import 'package:crypto/crypto.dart';
+import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository();
@@ -23,15 +27,13 @@ class AuthRepository {
     required String codeVerifier,
     required String clientId,
     required String redirectUri,
-    String? clientSecret,
   }) async {
-    final url = Uri.parse('https://myanimelist.net/v1/oauth2/token');
+    final url = Uri.https('myanimelist.net', 'v1/oauth2/token');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
       body: {
         'client_id': clientId,
-        if (clientSecret != null) 'client_secret': clientSecret,
         'code': authorizationCode,
         'code_verifier': codeVerifier,
         'grant_type': 'authorization_code',
@@ -105,25 +107,52 @@ class AuthRepository {
     }
   }
 
-  Future<void> launchLoginUrl({
-    required String codeVerifier,
-    required String clientId,
-    required String redirectUrl,
-  }) async {
-    final url =
-        'https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=$clientId&code_challenge=$codeVerifier&code_challenge_method=plain&redirect_uri=$redirectUrl';
-
-    if (await canLaunchUrl(Uri.parse(url))) {
-      bool success = await launchUrl(
-        Uri.parse(url),
-        mode: LaunchMode.externalApplication,
-      );
-      if (!success) {
-        throw Exception('Failed to launch $url');
-      }
+  Future<Credential> launchLoginUrl({required String codeVerifier}) async {
+    final clientId = Env.clientId;
+    final String callbackUrlScheme;
+    if (kIsWeb) {
+      callbackUrlScheme = Env.webCallbackScheme;
+    } else if (io.Platform.isWindows) {
+      callbackUrlScheme = Env.windowsCallbackScheme;
+    } else if (io.Platform.isLinux) {
+      callbackUrlScheme = Env.linuxCallbackScheme;
+    } else if (io.Platform.isMacOS) {
+      callbackUrlScheme = Env.macosCallbackScheme;
+    } else if (io.Platform.isIOS) {
+      callbackUrlScheme = Env.iosCallbackScheme;
+    } else if (io.Platform.isAndroid) {
+      callbackUrlScheme = Env.androidCallbackScheme;
     } else {
-      throw Exception('Could not launch $url');
+      throw Exception('Unsupported platform');
     }
+    final redirectUrl = '$callbackUrlScheme://oauth2redirect';
+    final url = Uri.https('myanimelist.net', '/v1/oauth2/authorize', {
+      'response_type': 'code',
+      'client_id': clientId,
+      'redirect_uri': redirectUrl,
+      'code_challenge': codeVerifier,
+      'code_challenge_method': 'plain',
+    });
+
+    // TODO: Include WebView2 Runtime in the build process. https://pub.dev/packages/desktop_webview_window#windows
+    final isAvailable = await WebviewWindow.isWebviewAvailable();
+    if (!isAvailable) {
+      throw AuthException('WebView is not available');
+    }
+    final result = await FlutterWebAuth2.authenticate(
+      url: url.toString(),
+      callbackUrlScheme: callbackUrlScheme,
+    );
+    final code = Uri.parse(result).queryParameters['code'];
+    if (code == null) {
+      throw AuthException('Failed to get authorization code');
+    }
+    return await exchangeCodeForToken(
+      authorizationCode: code,
+      codeVerifier: codeVerifier,
+      clientId: Env.clientId,
+      redirectUri: redirectUrl,
+    );
   }
 }
 
@@ -145,39 +174,15 @@ final authNotifierProvider =
 class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
   @override
   Future<AuthNotifierState> build() async {
-    final initialAppLink = await ref.watch(initialAppLinkProvider.future);
-    if (initialAppLink != null) {
-      await _handleUrl(initialAppLink);
-    }
     await _checkExpiredToken();
 
-    final appLink = ref.watch(appLinksStreamProvider);
-    appLink.whenData((uri) async {
-      await _handleUrl(uri);
-    });
     return await _loadTokens();
-  }
-
-  Future<void> _handleUrl(Uri uri) async {
-    if (uri.scheme == 'dev.getboolean.anime-character-tierlist' &&
-        uri.host == 'oauth2redirect') {
-      final code = uri.queryParameters['code'];
-      if (code != null) {
-        await _exchangeCodeForToken(code);
-      }
-    }
   }
 
   static final FlutterSecureStorage _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
   );
-
-  static final String _clientId = '1c9a747601ef32d03d54067890189509';
-  // static final String _clientSecret =
-  //     '14b9296d7b74983d13a714d7bbb568a6381a04a56119ab6c8946576d0a7f6e8f';
-  static final String _redirectUrl =
-      'dev.getboolean.anime-character-tierlist://oauth2redirect';
 
   Future<AuthNotifierState> _loadTokens() async {
     try {
@@ -216,7 +221,7 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
       return;
     }
 
-    if (DateTime.now().isAfter(credential.expiresAt)) {
+    if (DateTime.now().isBefore(credential.expiresAt)) {
       await _refreshAccessToken(credential.refreshToken);
     }
   }
@@ -224,17 +229,17 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
   Future<void> login() async {
     final codeVerifier = _generateCodeChallenge(_generateCodeVerifier());
     await saveCodeVerifier(codeVerifier);
-    try {
-      await ref
+    state = AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final credential = await ref
           .read(authRepositoryProvider)
-          .launchLoginUrl(
-            codeVerifier: codeVerifier,
-            clientId: _clientId,
-            redirectUrl: _redirectUrl,
-          );
-    } on Exception catch (e) {
-      state = AsyncValue.error(e, StackTrace.current);
-    }
+          .launchLoginUrl(codeVerifier: codeVerifier);
+      final username = await ref
+          .read(malRepositoryProvider)
+          .fetchUsername(credential.accessToken);
+      await _saveTokens(credential, username);
+      return AuthNotifierState(username: username, credential: credential);
+    });
   }
 
   static String _generateCodeVerifier([int length = 128]) {
@@ -283,33 +288,6 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     }
   }
 
-  Future<void> _exchangeCodeForToken(String authorizationCode) async {
-    state = const AsyncValue.loading();
-    final codeVerifier = await _storage.read(key: 'code_verifier');
-    if (codeVerifier == null) {
-      throw StateError('Code verifier not found');
-    }
-    final credential = await ref
-        .read(authRepositoryProvider)
-        .exchangeCodeForToken(
-          authorizationCode: authorizationCode,
-          codeVerifier: codeVerifier,
-          clientId: _clientId,
-          redirectUri: _redirectUrl,
-        );
-    try {
-      final username = await ref
-          .read(malRepositoryProvider)
-          .fetchUsername(credential.accessToken);
-      await _saveTokens(credential, username);
-      state = AsyncValue.data(
-        AuthNotifierState(username: username, credential: credential),
-      );
-    } on Exception catch (e) {
-      state = AsyncValue.error(e, StackTrace.current);
-    }
-  }
-
   static Future<void> _saveTokens(
     Credential credential,
     String username,
@@ -327,7 +305,10 @@ class AuthNotifier extends AsyncNotifier<AuthNotifierState> {
     try {
       final Credential credential = await ref
           .read(authRepositoryProvider)
-          .refreshAccessToken(refreshToken: refreshToken, clientId: _clientId);
+          .refreshAccessToken(
+            refreshToken: refreshToken,
+            clientId: Env.clientId,
+          );
       final username = await ref
           .read(malRepositoryProvider)
           .fetchUsername(credential.accessToken);

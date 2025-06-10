@@ -10,7 +10,16 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text('Home')),
+      appBar: AppBar(
+        title: Text('Home'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () => ref.read(authServiceProvider).logout(),
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
       body: Center(child: RankingScreen()),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
