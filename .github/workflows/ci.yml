@@ -102,6 +102,10 @@ jobs:
         if: github.event.inputs.run_tests == 'true' || github.event.inputs.run_tests == null
         run: dart pub global activate melos ${{env.MELOS_VERSION}}
 
+      - name: Install dependencies
+        if: github.event.inputs.run_tests == 'true' || github.event.inputs.run_tests == null
+        run: flutter pub get
+
       - name: Bootstrap Melos
         if: github.event.inputs.run_tests == 'true' || github.event.inputs.run_tests == null
         run: melos bootstrap
