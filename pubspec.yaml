@@ -23,15 +23,15 @@ dependencies:
   path_provider: ^2.1.1
   rate_limiter: ^1.0.0
   retry: ^3.1.2
-  shared_preferences: ^2.5.2
+  shared_preferences: ^2.5.3
   token_bucket: ^0.9.7-pre
   url_launcher: ^6.3.1
-  sqlite3_flutter_libs: ^0.5.32
+  sqlite3_flutter_libs: ^0.5.34
   path: ^1.8.3
   drift_flutter: ^0.2.4
   drift: ^2.26.1
   drift_dev: ^2.26.1
-  sqlite3: ^2.7.5
+  sqlite3: ^2.7.6
   drag_and_drop_lists: ^0.4.2
   flutter_web_auth_2: ^4.1.0
   desktop_webview_window: ^0.2.3
